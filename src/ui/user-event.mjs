@@ -29,6 +29,27 @@ export function setInput (selectorOrElement, value) {
   })
 }
 
+export function setInputFile (selectorOrElement, files) {
+  return performAction(async resolve => {
+    const element = typeof selectorOrElement === 'string'
+      ? document.querySelector(selectorOrElement)
+      : selectorOrElement
+
+    if (!element) throw new AssertionError({ name: 'setInputFile', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` })
+
+    const dataTransfer = new DataTransfer();
+
+    files.forEach(file => dataTransfer.items.add(file));
+
+    element.files = dataTransfer.files
+
+    await dispatchEvent(element, 'change')
+
+    resolve()
+  })
+
+}
+
 export function setSelect (selectorOrElement, value) {
   return setInput(selectorOrElement, value)
 }
