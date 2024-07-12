@@ -193,14 +193,23 @@ const setSelect = (selectorOrElement, value) => {
   return setInput(selectorOrElement, value)
 }
 
-export {
-  waitForRequest,
-  waitForNavigation,
+export const screen = {
   getBySelector,
   getByText,
+}
+
+export const userEvent = {
   click,
   blur,
   keyup,
   setInput,
   setSelect
+}
+
+export const request ={
+  waitForRequest,
+}
+
+export const navigation ={
+  waitForNavigation,
 }

@@ -1,4 +1,4 @@
-import { describe, test, expect } from './testing-lib.mjs'
+import { describe, test, expect } from './src/index.mjs'
 
 describe('outer first', () => {
   test('should resolve to lemon', async () => {
