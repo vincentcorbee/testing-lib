@@ -1,9 +1,26 @@
-export class TestRun {
-  skipped
-  passed
-  failed
+import { AssertionError } from "./assertion.js"
 
-  #summary
+type Test = {
+  name: string
+  fn: () => void | Promise<any>
+  skip?: boolean
+}
+
+type Interceptor = (original: (...args: any) => any, ...args: any[]) => any
+
+type DescribeBlock = {
+  name: string
+  blocks: Map<string, DescribeBlock>
+  tests: Test[]
+  isRoot: boolean
+}
+
+export class TestRun {
+  skipped: number
+  passed: number
+  failed: number
+
+  #summary: string
 
   constructor() {
     this.passed = 0
@@ -30,38 +47,48 @@ export class TestRun {
     return result
   }
 
-  addToSummary(value) {
+  addToSummary(value: string) {
     this.#summary +=value
   }
 }
 
 export class TestRunner {
-  #describeBlocks
-  #root
-  #currentDescribeBlock
-  #shouldSkip
-  #testRun
+  #describeBlocks: DescribeBlock[]
+  #root: DescribeBlock
+  #currentDescribeBlock: DescribeBlock
+  #shouldSkip: boolean
+  #testRun: TestRun
+  #beforeEachCallbacks: (() => void | Promise<void>)[]
+  #beforeAllCallbacks:  (() => void | Promise<void>)[]
+  #started: boolean
 
-  static createDescribeBlock(name, isRoot = false) {
+  static #createDescribeBlock(name, isRoot = false) {
     return { name, blocks: new Map(), tests: [], isRoot }
   }
 
   constructor() {
     this.#describeBlocks = []
-    this.#root = this.#currentDescribeBlock = TestRunner.createDescribeBlock('', true)
+    this.#root = this.#currentDescribeBlock = TestRunner.#createDescribeBlock('', true)
     this.#shouldSkip = false
     this.#testRun = new TestRun()
+    this.#beforeEachCallbacks = []
+    this.#beforeAllCallbacks = []
+    this.#started = false
   }
 
   #reset() {
     this.#describeBlocks = []
-    this.#root = this.#currentDescribeBlock = TestRunner.createDescribeBlock('', true)
+    this.#root = this.#currentDescribeBlock = TestRunner.#createDescribeBlock('', true)
     this.#shouldSkip = false
     this.#testRun = new TestRun()
+    this.#started = false
+    this.#beforeAllCallbacks = []
+    this.#beforeEachCallbacks = []
   }
 
-  async #traverseDescribeBlock(describeBlock, indent) {
+  async #traverseDescribeBlock(describeBlock: DescribeBlock, indent = 0) {
     const testRun = this.#testRun
+    const beforeEachCallbacks = this.#beforeEachCallbacks
 
     if (!describeBlock.isRoot) testRun.addToSummary(`${' '.repeat(indent)}\x1b[1m${describeBlock.name}\x1b[m\n`)
 
@@ -71,25 +98,32 @@ export class TestRunner {
       const { name, fn, skip = false } = test
       if (!this.#shouldSkip && !skip) {
           try {
-          const returnValue = fn()
+            for (const callback of beforeEachCallbacks) {
+              await callback()
+            }
+            const returnValue = fn()
 
-          if (returnValue instanceof Promise) {
-            await returnValue
-          } else if(returnValue !== undefined){
-            throw Error(`${returnValue} is not allowed return value from test function`)
-          }
+            if (returnValue instanceof Promise) {
+              await returnValue
+            } else if(returnValue !== undefined){
+              throw Error(`${returnValue} is not allowed return value from test function`)
+            }
 
             testRun.passed++
 
           testRun.addToSummary(`${' '.repeat(indent + 1)}\x1b[32;1m✓\x1b[m \x1b[90m${name}\x1b[m\n`)
         } catch (error) {
-          const errorMessage = `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`
+          let errorMessage = ''
+
+          if (error instanceof AssertionError) {
+            errorMessage = `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`
+          }
 
           testRun.addToSummary(`${'-'.repeat(20)}\n`)
           testRun.addToSummary(errorMessage)
           testRun.addToSummary(`${'-'.repeat(20)}\n`)
 
-          this.shouldSkip = true
+          this.#shouldSkip = true
 
           testRun.failed++
         }
@@ -104,12 +138,20 @@ export class TestRunner {
     }
   }
 
-  async test(name, fn, skip = false) {
+  async test(name: string, fn: Test['fn'], skip = false) {
     this.#currentDescribeBlock.tests.push({ name, fn, skip })
   }
 
-  async describe(name, fn) {
-    const newDescribeBlock = TestRunner.createDescribeBlock(name)
+  async describe(name: string, fn) {
+    if(!this.#started) {
+      for (const callback of this.#beforeAllCallbacks) {
+        await callback()
+      }
+
+      this.#started = true
+    }
+
+    const newDescribeBlock = TestRunner.#createDescribeBlock(name)
     const describeBlocks = this.#describeBlocks
     const root = this.#root
 
@@ -128,7 +170,7 @@ export class TestRunner {
       index--
     }
 
-    let parentDescribeBlock
+    let parentDescribeBlock: DescribeBlock
 
     if (index !== -1) {
       describeBlocks.splice(index, 1)
@@ -150,5 +192,21 @@ export class TestRunner {
     } else {
       parentDescribeBlock.blocks.set(name, newDescribeBlock)
     }
+  }
+
+  intercept(object: any, methodName: string, interceptor: Interceptor) {
+    const original = object[methodName]
+
+    object[methodName] = function(...args: any[]) {
+      return interceptor.apply(object, [original, ...args])
+    }
+  }
+
+  beforeAll(fn: () => void | Promise<void>) {
+    this.#beforeAllCallbacks.push(fn)
+  }
+
+  beforeEach(fn: () => void | Promise<void>) {
+    this.#beforeEachCallbacks.push(fn)
   }
 }

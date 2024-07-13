@@ -1,5 +1,5 @@
-import { dispatchEvent } from './utils.mjs'
-import { AssertionError } from '../testing/assertion.mjs'
+import { dispatchEvent, performAction } from './utils.js'
+import { AssertionError } from '../core/assertion.js'
 
 export const click = (selector) => dispatchEvent(selector, 'click')
 
@@ -18,9 +18,9 @@ export function setInput (selectorOrElement, value) {
     element.focus()
 
     /* To trigger event in React */
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), 'value').set
+    const nativeInputValueSetter = Reflect.getOwnPropertyDescriptor(Reflect.getPrototypeOf(element)!, 'value')?.set
 
-    nativeInputValueSetter.call(element, value)
+    if(nativeInputValueSetter) nativeInputValueSetter.call(element, value)
 
     await dispatchEvent(element, 'change')
     await dispatchEvent(element, 'input')
@@ -47,7 +47,6 @@ export function setInputFile (selectorOrElement, files) {
 
     resolve()
   })
-
 }
 
 export function setSelect (selectorOrElement, value) {

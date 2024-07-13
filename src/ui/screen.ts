@@ -1,4 +1,6 @@
-import { performAction } from './utils.mjs'
+// @ts-nocheck
+import { AssertionError } from '../core/assertion.js'
+import { performAction } from './utils.js'
 
 export function getBySelector(selector) {
   return performAction((resolve) => {

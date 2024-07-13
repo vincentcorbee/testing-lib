@@ -1,4 +1,11 @@
+// @ts-nocheck
 export class MatcherResult {
+  name: any
+  actual: any
+  expected: any
+  message: string
+  pass: boolean
+
   constructor(properties = {}) {
     const { name, actual, expected, message, pass = true } = properties
 
@@ -11,6 +18,8 @@ export class MatcherResult {
 }
 
 export class AssertionError extends Error {
+  matcherResult: MatcherResult
+
   constructor(matcherResultLike) {
     const matcherResult = matcherResultLike instanceof MatcherResult ? matcherResultLike : new MatcherResult(matcherResultLike)
 

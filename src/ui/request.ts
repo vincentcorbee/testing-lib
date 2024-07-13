@@ -1,4 +1,4 @@
-import { requestSubject } from "./subjects.mjs"
+import { requestSubject } from "../shared/index.js"
 
 export async function waitForRequest(path, predicate) {
   return new Promise((resolve, reject) => {

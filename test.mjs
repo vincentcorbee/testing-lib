@@ -1,4 +1,8 @@
-import { describe, test, expect } from './src/index.mjs'
+import { describe, test, expect, beforeAll } from './dist/index.js'
+
+beforeAll(() => {
+  console.log('beforeAll')
+})
 
 describe('outer first', () => {
   test('should resolve to lemon', async () => {
@@ -6,7 +10,7 @@ describe('outer first', () => {
   })
 
   test('should be true', async () => {
-    expect(true).toEqual('false')
+    expect(true).toEqual(false)
   })
 
   describe('inner first', () => {

@@ -1,4 +1,4 @@
-import { AssertionError } from '../testing/assertion.mjs'
+import { AssertionError } from '../core/assertion.js'
 
 export function performAction (action) {
   return new Promise((resolve, reject) => {
@@ -50,7 +50,7 @@ export function dispatchEvent(selectorOrElement, eventType, payload = {}) {
           break
     }
 
-    if (!event) reject(Error(`Unsupported event $(eventType)`))
+    if (!event) reject(Error(`Unsupported event ${eventType}`))
     else {
         element.dispatchEvent(event)
 

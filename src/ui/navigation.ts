@@ -1,4 +1,4 @@
-import { navigationSubject } from "./subjects.mjs"
+import { navigationSubject } from "./subjects.js"
 
 export async function waitForNavigation(path, timeout = 3000) {
   return new Promise((resolve, reject) => {
@@ -7,7 +7,7 @@ export async function waitForNavigation(path, timeout = 3000) {
     const subscription = navigationSubject.subscribe({ next: async data => {
       called = true
 
-      const match = typeof url === 'string' ? data.url === path : path.test(data.url)
+      const match = typeof path === 'string' ? data.url === path : path.test(data.url)
 
       if(match) resolve(true)
       else reject(Error(`Url not matched: ${path}`))

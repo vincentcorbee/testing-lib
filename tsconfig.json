@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "noImplicitAny": false,
+    "moduleResolution": "NodeNext",
+    "sourceMap": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/testing-lib.mjs",
+    "src/ui-testing-lib.mjs"
+  ]
+}
