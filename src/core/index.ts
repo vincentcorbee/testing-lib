@@ -22,22 +22,26 @@ export function beforeAll(fn) {
   testRunner.beforeAll(fn)
 }
 
-export async function describe(name, fn) {
+export function beforeEach(fn) {
+  testRunner.beforeEach(fn)
+}
+
+export async function describe(name: string, fn) {
   await testRunner.describe(name, fn)
 }
 
-export function test(name, fn) {
+export function test(name: string, fn) {
   testRunner.test(name, fn)
 }
 
 Object.defineProperties(test, {
   skip: {
-    value: function (name, fn) {
+    value: function (name: string, fn) {
       testRunner.test(name, fn, true)
     }
   },
   only: {
-    value: function (name, fn) {
+    value: function (name: string, fn) {
       testRunner.test(name, fn)
     }
   }

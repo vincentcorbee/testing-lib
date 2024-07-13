@@ -16,6 +16,9 @@ export { expect } from './assertion.js';
 export function beforeAll(fn) {
     testRunner.beforeAll(fn);
 }
+export function beforeEach(fn) {
+    testRunner.beforeEach(fn);
+}
 export async function describe(name, fn) {
     await testRunner.describe(name, fn);
 }

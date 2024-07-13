@@ -1,7 +1,11 @@
-import { describe, test, expect, beforeAll } from './dist/index.js'
+import { describe, test, expect, beforeAll, beforeEach } from './dist/index.js'
 
 beforeAll(() => {
   console.log('beforeAll')
+})
+
+beforeEach(() => {
+  console.log('beforeEach')
 })
 
 describe('outer first', () => {

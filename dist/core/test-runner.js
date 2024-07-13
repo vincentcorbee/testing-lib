@@ -64,6 +64,12 @@ export class TestRunner {
         if (!describeBlock.isRoot)
             testRun.addToSummary(`${' '.repeat(indent)}\x1b[1m${describeBlock.name}\x1b[m\n`);
         const { tests } = describeBlock;
+        if (!this.#started) {
+            this.#started = true;
+            for (const callback of this.#beforeAllCallbacks) {
+                await callback();
+            }
+        }
         for (const test of tests) {
             const { name, fn, skip = false } = test;
             if (!this.#shouldSkip && !skip) {
@@ -106,12 +112,6 @@ export class TestRunner {
         this.#currentDescribeBlock.tests.push({ name, fn, skip });
     }
     async describe(name, fn) {
-        if (!this.#started) {
-            for (const callback of this.#beforeAllCallbacks) {
-                await callback();
-            }
-            this.#started = true;
-        }
         const newDescribeBlock = TestRunner.#createDescribeBlock(name);
         const describeBlocks = this.#describeBlocks;
         const root = this.#root;

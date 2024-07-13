@@ -94,13 +94,23 @@ export class TestRunner {
 
     const { tests } = describeBlock
 
+    if(!this.#started) {
+      this.#started = true
+
+      for (const callback of this.#beforeAllCallbacks) {
+        await callback()
+      }
+    }
+
     for (const test of tests) {
       const { name, fn, skip = false } = test
+
       if (!this.#shouldSkip && !skip) {
           try {
             for (const callback of beforeEachCallbacks) {
               await callback()
             }
+
             const returnValue = fn()
 
             if (returnValue instanceof Promise) {
@@ -143,14 +153,6 @@ export class TestRunner {
   }
 
   async describe(name: string, fn) {
-    if(!this.#started) {
-      for (const callback of this.#beforeAllCallbacks) {
-        await callback()
-      }
-
-      this.#started = true
-    }
-
     const newDescribeBlock = TestRunner.#createDescribeBlock(name)
     const describeBlocks = this.#describeBlocks
     const root = this.#root
