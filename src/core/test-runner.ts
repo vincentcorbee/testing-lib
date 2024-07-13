@@ -199,9 +199,19 @@ export class TestRunner {
   intercept(object: any, methodName: string, interceptor: Interceptor) {
     const original = object[methodName]
 
-    object[methodName] = function(...args: any[]) {
+    const intercept = function(...args: any[]) {
       return interceptor.apply(object, [original, ...args])
     }
+
+    Reflect.defineProperty(object, 'restore', {
+      value: () => {
+        object[methodName] = original
+      }
+    })
+
+    object[methodName] = intercept
+
+    return intercept
   }
 
   beforeAll(fn: () => void | Promise<void>) {

@@ -146,9 +146,16 @@ export class TestRunner {
     }
     intercept(object, methodName, interceptor) {
         const original = object[methodName];
-        object[methodName] = function (...args) {
+        const intercept = function (...args) {
             return interceptor.apply(object, [original, ...args]);
         };
+        Reflect.defineProperty(object, 'restore', {
+            value: () => {
+                object[methodName] = original;
+            }
+        });
+        object[methodName] = intercept;
+        return intercept;
     }
     beforeAll(fn) {
         this.#beforeAllCallbacks.push(fn);
