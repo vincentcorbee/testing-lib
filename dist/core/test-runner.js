@@ -133,5 +133,20 @@ export class TestRunner {
     beforeEach(fn) {
         this.#beforeEachCallbacks.push(fn);
     }
+    clearAllMock() {
+        for (const mockFunction of this.#mockFunctions) {
+            mockFunction.clear();
+        }
+    }
+    resetAllMock() {
+        for (const mockFunction of this.#mockFunctions) {
+            mockFunction.reset();
+        }
+    }
+    restoreAllMock() {
+        for (const mockFunction of this.#mockFunctions) {
+            mockFunction.restore();
+        }
+    }
 }
 //# sourceMappingURL=test-runner.js.map

@@ -45,8 +45,9 @@ export function MockFunctionFactory(mockImplementation: GenericFunction = noop, 
 
       return result
     },
-    get(_target, prop) {
-      console.log(prop)
+    get(target, prop) {
+      if (prop === 'call' || prop === 'apply') return target[prop]
+
       if (prop === 'mock') {
         return {
           calls: [...calls],

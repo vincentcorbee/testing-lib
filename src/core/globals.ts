@@ -59,5 +59,8 @@ export const runner: Runner = {
   },
   restoreAllMock() {
     testRunner.restoreAllMock()
+  },
+  intercept(object, methodName, interceptor) {
+    return testRunner.intercept(object, methodName, interceptor)
   }
 }

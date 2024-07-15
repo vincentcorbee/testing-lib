@@ -1,6 +1,6 @@
 import { requestSubject } from "../shared/index.js"
 
-export async function waitForRequest(path, predicate) {
+export async function waitForRequest(path: string, predicate: any) {
   return new Promise((resolve, reject) => {
     let called = false
 
@@ -13,7 +13,7 @@ export async function waitForRequest(path, predicate) {
 
           if (result === true) resolve(true)
           else {
-              reject(Error(`Request not matched: ${path}`))
+            reject(Error(`Request not matched: ${path}`))
           }
         } else resolve(true)
       } else reject(Error(`Request not matched: ${path}`))

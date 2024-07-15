@@ -2,6 +2,16 @@ import { describe, test, expect, beforeAll, beforeEach, runner } from './dist/in
 
 const fn = runner.mockFunction((a, b) => a + b)
 
+runner.intercept(globalThis, 'fetch', async function (originalFetch, ...args) {
+  console.log(args)
+
+  const response = await originalFetch.call(this, ...args);
+
+  return response;
+})
+
+fetch('https://jsonplaceholder.typicode.com/todos/1', { method: 'GET', headers: { 'x-foo': 'bar' } }).then()
+
 fn(1, 2)
 
 let msg = ''

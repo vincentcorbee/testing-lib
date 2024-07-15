@@ -39,6 +39,18 @@ Object.defineProperties(test, {
 export const runner = {
     mockFunction(mockImplementation) {
         return testRunner.mockFunction(mockImplementation);
+    },
+    clearAllMock() {
+        testRunner.clearAllMock();
+    },
+    resetAllMock() {
+        testRunner.resetAllMock();
+    },
+    restoreAllMock() {
+        testRunner.restoreAllMock();
+    },
+    intercept(object, methodName, interceptor) {
+        return testRunner.intercept(object, methodName, interceptor);
     }
 };
 //# sourceMappingURL=globals.js.map

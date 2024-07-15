@@ -28,3 +28,10 @@ export type DescribeBlock = {
     tests: Test[];
     isRoot: boolean;
 };
+export type Runner = {
+    readonly mockFunction: (mockImplementation?: MockFunctionImplementation) => MockFunction;
+    intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction;
+    clearAllMock(): void;
+    resetAllMock(): void;
+    restoreAllMock(): void;
+};

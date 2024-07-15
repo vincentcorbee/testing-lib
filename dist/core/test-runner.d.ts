@@ -8,4 +8,7 @@ export declare class TestRunner {
     intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction;
     beforeAll(fn: () => void | Promise<void>): void;
     beforeEach(fn: () => void | Promise<void>): void;
+    clearAllMock(): void;
+    resetAllMock(): void;
+    restoreAllMock(): void;
 }

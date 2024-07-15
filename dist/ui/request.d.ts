@@ -1,1 +1,1 @@
-export declare function waitForRequest(path: any, predicate: any): Promise<unknown>;
+export declare function waitForRequest(path: string, predicate: any): Promise<unknown>;
