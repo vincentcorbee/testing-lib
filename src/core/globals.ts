@@ -10,7 +10,7 @@ export const testRunner = new TestRunner()
 const env = typeof Window === 'function' ? 'browser' : 'node'
 
 testRunner.intercept(globalThis, 'fetch', fetchInterceptor)
-testRunner.intercept(console, 'log', consoleLogInterceptor)
+// testRunner.intercept(console, 'log', consoleLogInterceptor)
 
 if (env === 'browser') {
   testRunner.intercept(XMLHttpRequest.prototype, 'open', xmlHttpRequestOpenInterceptor)
