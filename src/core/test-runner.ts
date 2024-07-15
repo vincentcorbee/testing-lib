@@ -1,56 +1,7 @@
 import { AssertionError } from "./assertion.js"
-
-type Test = {
-  name: string
-  fn: () => void | Promise<any>
-  skip?: boolean
-}
-
-type Interceptor = (original: (...args: any) => any, ...args: any[]) => any
-
-type DescribeBlock = {
-  name: string
-  blocks: Map<string, DescribeBlock>
-  tests: Test[]
-  isRoot: boolean
-}
-
-export class TestRun {
-  skipped: number
-  passed: number
-  failed: number
-
-  #summary: string
-
-  constructor() {
-    this.passed = 0
-    this.failed = 0
-    this.skipped = 0
-    this.#summary = ''
-  }
-
-  get total() {
-    return this.passed + this.failed + this.skipped
-  }
-
-  get summary() {
-    let result = this.#summary
-
-    result += '\n'
-    result += this.failed === 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n'
-    result += '\n\x1b[1mTests\x1b[m: '
-    result += `\x1b[1;93m${this.skipped} skipped\x1b[m, `
-    result += `\x1b[1;32m${this.passed} passed\x1b[m, `
-    result += `\x1b[1;91m${this.failed} failed\x1b[m, `
-    result += `\x1b[2m${this.total} total\x1b[m\n`
-
-    return result
-  }
-
-  addToSummary(value: string) {
-    this.#summary +=value
-  }
-}
+import { MockFunctionFactory } from "./mock-function-factory.js"
+import { TestRun } from "./test-run.js"
+import { DescribeBlock, Interceptor, MockFunction, MockFunctionImplementation, Test } from "./types.js"
 
 export class TestRunner {
   #describeBlocks: DescribeBlock[]
@@ -62,7 +13,9 @@ export class TestRunner {
   #beforeAllCallbacks:  (() => void | Promise<void>)[]
   #started: boolean
 
-  static #createDescribeBlock(name, isRoot = false) {
+  #mockFunctions: MockFunction[]
+
+  static #createDescribeBlock(name: string, isRoot = false) {
     return { name, blocks: new Map(), tests: [], isRoot }
   }
 
@@ -74,6 +27,7 @@ export class TestRunner {
     this.#beforeEachCallbacks = []
     this.#beforeAllCallbacks = []
     this.#started = false
+    this.#mockFunctions = []
   }
 
   #reset() {
@@ -196,22 +150,16 @@ export class TestRunner {
     }
   }
 
-  intercept(object: any, methodName: string, interceptor: Interceptor) {
-    const original = object[methodName]
+  mockFunction(mockImplementation?: MockFunctionImplementation): MockFunction {
+    const mockFunction = MockFunctionFactory(mockImplementation)
 
-    const intercept = function(...args: any[]) {
-      return interceptor.apply(object, [original, ...args])
-    }
+    this.#mockFunctions.push(mockFunction)
 
-    Reflect.defineProperty(object, 'restore', {
-      value: () => {
-        object[methodName] = original
-      }
-    })
+    return mockFunction
+  }
 
-    object[methodName] = intercept
-
-    return intercept
+  intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction {
+    return MockFunctionFactory(interceptor, { object, methodName })
   }
 
   beforeAll(fn: () => void | Promise<void>) {
@@ -220,5 +168,23 @@ export class TestRunner {
 
   beforeEach(fn: () => void | Promise<void>) {
     this.#beforeEachCallbacks.push(fn)
+  }
+
+  clearAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.clear()
+    }
+  }
+
+  resetAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.reset()
+    }
+  }
+
+  restoreAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.restore()
+    }
   }
 }

@@ -1,20 +1,30 @@
-import { describe, test, expect, beforeAll, beforeEach } from './dist/index.js'
+import { describe, test, expect, beforeAll, beforeEach, runner } from './dist/index.js'
+
+const fn = runner.mockFunction((a, b) => a + b)
+
+fn(1, 2)
+
+let msg = ''
 
 beforeAll(() => {
-  console.log('beforeAll')
+  msg = 'doei'
 })
 
 beforeEach(() => {
-  console.log('beforeEach')
+  msg = 'hello'
 })
 
 describe('outer first', () => {
   test('should resolve to lemon', async () => {
     await expect(Promise.resolve('lemon')).resolves.toEqual('lemon')
+    expect(msg).toEqual('hello')
+
+    msg = 'doei'
   })
 
   test('should be true', async () => {
-    expect(true).toEqual(false)
+    expect(true).toEqual(true)
+    expect(msg).toEqual('hello')
   })
 
   describe('inner first', () => {

@@ -1,33 +1,6 @@
 import { AssertionError } from "./assertion.js";
-export class TestRun {
-    skipped;
-    passed;
-    failed;
-    #summary;
-    constructor() {
-        this.passed = 0;
-        this.failed = 0;
-        this.skipped = 0;
-        this.#summary = '';
-    }
-    get total() {
-        return this.passed + this.failed + this.skipped;
-    }
-    get summary() {
-        let result = this.#summary;
-        result += '\n';
-        result += this.failed === 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n';
-        result += '\n\x1b[1mTests\x1b[m: ';
-        result += `\x1b[1;93m${this.skipped} skipped\x1b[m, `;
-        result += `\x1b[1;32m${this.passed} passed\x1b[m, `;
-        result += `\x1b[1;91m${this.failed} failed\x1b[m, `;
-        result += `\x1b[2m${this.total} total\x1b[m\n`;
-        return result;
-    }
-    addToSummary(value) {
-        this.#summary += value;
-    }
-}
+import { MockFunctionFactory } from "./mock-function-factory.js";
+import { TestRun } from "./test-run.js";
 export class TestRunner {
     #describeBlocks;
     #root;
@@ -37,6 +10,7 @@ export class TestRunner {
     #beforeEachCallbacks;
     #beforeAllCallbacks;
     #started;
+    #mockFunctions;
     static #createDescribeBlock(name, isRoot = false) {
         return { name, blocks: new Map(), tests: [], isRoot };
     }
@@ -48,6 +22,7 @@ export class TestRunner {
         this.#beforeEachCallbacks = [];
         this.#beforeAllCallbacks = [];
         this.#started = false;
+        this.#mockFunctions = [];
     }
     #reset() {
         this.#describeBlocks = [];
@@ -144,18 +119,13 @@ export class TestRunner {
             parentDescribeBlock.blocks.set(name, newDescribeBlock);
         }
     }
+    mockFunction(mockImplementation) {
+        const mockFunction = MockFunctionFactory(mockImplementation);
+        this.#mockFunctions.push(mockFunction);
+        return mockFunction;
+    }
     intercept(object, methodName, interceptor) {
-        const original = object[methodName];
-        const intercept = function (...args) {
-            return interceptor.apply(object, [original, ...args]);
-        };
-        Reflect.defineProperty(object, 'restore', {
-            value: () => {
-                object[methodName] = original;
-            }
-        });
-        object[methodName] = intercept;
-        return intercept;
+        return MockFunctionFactory(interceptor, { object, methodName });
     }
     beforeAll(fn) {
         this.#beforeAllCallbacks.push(fn);

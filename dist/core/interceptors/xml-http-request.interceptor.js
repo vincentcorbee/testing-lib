@@ -26,7 +26,6 @@ export function xmlHttpRequestOpenInterceptor(originalXhttpRequestOpen, ...args)
 export function xmlHttpRequestSendInterceptor(originalXhttpRequestSend, body) {
     // @ts-ignore
     this.body = body;
-    // @ts-ignore
     return originalXhttpRequestSend.call(this, body);
 }
 //# sourceMappingURL=xml-http-request.interceptor.js.map
