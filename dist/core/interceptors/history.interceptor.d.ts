@@ -1,1 +1,0 @@
-export declare function historyPushStateInterceptor(this: Window['history'], originalPushState: Window['history']['pushState'], ...args: [data: any, unused: string, url?: string | URL | null | undefined]): void;

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, beforeEach, runner } from './dist/index.js'
+import { describe, test, expect, beforeAll, beforeEach, runner, request } from './dist/index.js'
 
 const fn = runner.mockFunction((a, b) => a + b)
 
@@ -11,6 +11,8 @@ runner.intercept(globalThis, 'fetch', async function (originalFetch, ...args) {
 })
 
 fetch('https://jsonplaceholder.typicode.com/todos/1', { method: 'GET', headers: { 'x-foo': 'bar' } }).then()
+
+console.log(request)
 
 fn(1, 2)
 
