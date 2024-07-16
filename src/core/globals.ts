@@ -4,13 +4,15 @@ import { fetchInterceptor } from './interceptors/fetch.interceptor.js';
 import { historyPushStateInterceptor } from './interceptors/history.interceptor.js';
 import { xmlHttpRequestOpenInterceptor, xmlHttpRequestSendInterceptor } from './interceptors/xml-http-request.interceptor.js';
 import { MockFunctionImplementation, Runner } from "./types.js";
+import { env } from "../shared/env.js";
+import { getFaker } from "../shared/get-faker.js";
 
 export const testRunner = new TestRunner()
 
-const env = typeof Window === 'function' ? 'browser' : 'node'
-
 testRunner.intercept(globalThis, 'fetch', fetchInterceptor)
 // testRunner.intercept(console, 'log', consoleLogInterceptor)
+
+getFaker().then(faker => globalThis.faker = faker)
 
 if (env === 'browser') {
   testRunner.intercept(XMLHttpRequest.prototype, 'open', xmlHttpRequestOpenInterceptor)

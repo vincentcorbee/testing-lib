@@ -1,26 +1,5 @@
 import { AssertionError } from '../core/assertion.js'
-
-export function performAction (action) {
-  return new Promise((resolve, reject) => {
-    const maxRetries = 5
-
-    let retries = 0
-
-    const perform = async () => {
-      try {
-        await action(resolve, reject)
-      } catch (error) {
-        if (retries >= maxRetries) reject(error)
-        else {
-          retries++
-          setTimeout(() => perform(), 500)
-        }
-      }
-    }
-
-    perform()
-  })
-}
+import { performAction } from '../shared/perform-action.js'
 
 export function dispatchEvent(selectorOrElement, eventType, payload = {}) {
   return performAction((resolve, reject) => {

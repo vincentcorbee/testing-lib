@@ -1,21 +1,22 @@
-import { dispatchEvent, performAction } from './utils.js'
+import { dispatchEvent } from './utils.js'
 import { AssertionError } from '../core/assertion.js'
+import { performAction } from '../shared/perform-action.js'
 
-export const click = (selector) => dispatchEvent(selector, 'click')
+export const click = (selectorOrElement: string | HTMLElement) => dispatchEvent(selectorOrElement, 'click')
 
-export const blur = (selector) => dispatchEvent(selector, 'blur')
+export const blur = (selectorOrElement: string | HTMLElement) => dispatchEvent(selectorOrElement, 'blur')
 
-export const keyup = (selector, key) => dispatchEvent(selector, 'keyup', { key })
+export const keyup = (selectorOrElement: string | HTMLElement, key: string) => dispatchEvent(selectorOrElement, 'keyup', { key })
 
-export function setInput (selectorOrElement, value) {
+export function setInput (selectorOrElement: string | HTMLInputElement, value: any) {
   return performAction(async resolve => {
     const element = typeof selectorOrElement === 'string'
       ? document.querySelector(selectorOrElement)
       : selectorOrElement
 
-    if (!element) throw new AssertionError({ name: 'setInput', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` })
+    if (!element) throw new AssertionError({ name: 'setInput', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` });
 
-    element.focus()
+    (element as HTMLInputElement).focus()
 
     /* To trigger event in React */
     const nativeInputValueSetter = Reflect.getOwnPropertyDescriptor(Reflect.getPrototypeOf(element)!, 'value')?.set

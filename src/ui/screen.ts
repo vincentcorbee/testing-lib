@@ -1,18 +1,17 @@
-// @ts-nocheck
 import { AssertionError } from '../core/assertion.js'
-import { performAction } from './utils.js'
+import { performAction } from '../shared/perform-action.js'
 
-export function getBySelector(selector) {
+export function getBySelector(selector: string) {
   return performAction((resolve) => {
     const element = document.querySelector(selector)
 
-    if (!element) throw new AssertionError({ name: 'getBySelector', expected: `Element with ${selector}`, actual: element, pass: false, message: `${text} not found` })
+    if (!element) throw new AssertionError({ name: 'getBySelector', expected: `Element with ${selector}`, actual: element, pass: false, message: `${selector} not found` })
 
     resolve(element)
   })
 }
 
-export function getByText(text, options = {}) {
+export function getByText(text: string, options: { parent?: string } = { parent: '*' }) {
   const parent = typeof options === 'string' ? options : options.parent || '*'
 
   return performAction(resolve => {

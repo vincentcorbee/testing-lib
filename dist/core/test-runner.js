@@ -68,7 +68,7 @@ export class TestRunner {
                         errorMessage = `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`;
                     }
                     else
-                        errorMessage = `${' '.repeat(indent + 1)}${error.message}`;
+                        errorMessage = `${' '.repeat(indent + 1)}${error.message}\n`;
                     testRun.addToSummary(`${'-'.repeat(20)}\n`);
                     testRun.addToSummary(errorMessage);
                     testRun.addToSummary(`${'-'.repeat(20)}\n`);

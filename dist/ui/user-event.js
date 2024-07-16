@@ -1,8 +1,9 @@
-import { dispatchEvent, performAction } from './utils.js';
+import { dispatchEvent } from './utils.js';
 import { AssertionError } from '../core/assertion.js';
-export const click = (selector) => dispatchEvent(selector, 'click');
-export const blur = (selector) => dispatchEvent(selector, 'blur');
-export const keyup = (selector, key) => dispatchEvent(selector, 'keyup', { key });
+import { performAction } from '../shared/perform-action.js';
+export const click = (selectorOrElement) => dispatchEvent(selectorOrElement, 'click');
+export const blur = (selectorOrElement) => dispatchEvent(selectorOrElement, 'blur');
+export const keyup = (selectorOrElement, key) => dispatchEvent(selectorOrElement, 'keyup', { key });
 export function setInput(selectorOrElement, value) {
     return performAction(async (resolve) => {
         const element = typeof selectorOrElement === 'string'

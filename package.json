@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm clean && tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "package:patch": "pnpm version patch"
   },
   "keywords": [],
   "author": "",
