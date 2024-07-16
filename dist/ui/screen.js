@@ -8,11 +8,17 @@ export function getBySelector(selector) {
         resolve(element);
     });
 }
-export function getByText(text, options = { parent: '*' }) {
-    const parent = typeof options === 'string' ? options : options.parent || '*';
+export function getByText(text, options = { parent: '*', index: 0 }) {
+    const { parent = '*', index = 0 } = typeof options === 'string' ? { parent: options } : options || {};
     return performAction(resolve => {
         const result = document.evaluate(`//${parent}[contains(text(),'${text}')]`, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-        const element = result.iterateNext();
+        let element;
+        let i = 0;
+        while ((element = result.iterateNext())) {
+            if (i === index)
+                break;
+            i++;
+        }
         if (!element)
             throw new AssertionError({ name: 'getByText', expected: `Element with ${text}`, actual: element, pass: false, message: `${text} not found` });
         resolve(element);
