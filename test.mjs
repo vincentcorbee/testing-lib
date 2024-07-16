@@ -12,7 +12,9 @@ runner.intercept(globalThis, 'fetch', async function (originalFetch, ...args) {
 
 fetch('https://jsonplaceholder.typicode.com/todos/1', { method: 'GET', headers: { 'x-foo': 'bar' } }).then()
 
-console.log(request)
+// const req = new XMLHttpRequest()
+
+// req.open('GET', 'https://jsonplaceholder.typicode.com/todos/1')
 
 fn(1, 2)
 

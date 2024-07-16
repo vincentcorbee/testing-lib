@@ -24,9 +24,10 @@ export function MockFunctionFactory(mockImplementation = noop, intercept) {
     let mockFunction;
     const handler = {
         apply(target, thisArg, args) {
+            const context = thisArg ?? target;
             calls.push(args);
-            contexts.push(thisArg ?? target);
-            const result = target.call(target, ...args);
+            contexts.push(context);
+            const result = target.call(context, ...args);
             results.push(result);
             return result;
         },
@@ -52,7 +53,7 @@ export function MockFunctionFactory(mockImplementation = noop, intercept) {
         const { object, methodName } = intercept;
         original = object[methodName];
         mockFunction = function (...args) {
-            return mockImplementation.apply(object, [original, ...args]);
+            return mockImplementation.apply(this, [original, ...args]);
         };
         const proxiedMockFunction = new Proxy(mockFunction, handler);
         object[methodName] = proxiedMockFunction;

@@ -36,10 +36,12 @@ export function MockFunctionFactory(mockImplementation: GenericFunction = noop, 
 
   const handler: ProxyHandler<MockFunction> = {
     apply(target, thisArg, args) {
-      calls.push(args)
-      contexts.push(thisArg ?? target)
+      const context = thisArg ?? target
 
-      const result = target.call(target, ...args);
+      calls.push(args)
+      contexts.push(context)
+
+      const result = target.call(context, ...args);
 
       results.push(result)
 
@@ -70,7 +72,7 @@ export function MockFunctionFactory(mockImplementation: GenericFunction = noop, 
     original = object[methodName]
 
     mockFunction = function(this: MockFunction, ...args: unknown[]): any {
-      return mockImplementation.apply(object, [original, ...args])
+      return mockImplementation.apply(this, [original, ...args])
     } as MockFunction
 
     const proxiedMockFunction = new Proxy(mockFunction as MockFunction, handler)
