@@ -37,7 +37,7 @@ describe('outer first', () => {
   })
 
   test('should be true', async () => {
-    expect(true).toEqual(true)
+    expect(true).toEqual(false)
     expect(msg).toEqual('hello')
   })
 
