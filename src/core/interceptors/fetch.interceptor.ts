@@ -4,7 +4,7 @@ export async function fetchInterceptor(this: typeof globalThis, originalFetch: t
   const [url, init = {}] = args
   const { method = 'GET', body } = init
 
-  const response = await originalFetch.call(this, ...args);
+  const response = await originalFetch(...args);
 
   requestSubject.next({
     type: 'fetch',

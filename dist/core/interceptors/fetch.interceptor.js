@@ -2,7 +2,7 @@ import { requestSubject } from '../../shared/index.js';
 export async function fetchInterceptor(originalFetch, ...args) {
     const [url, init = {}] = args;
     const { method = 'GET', body } = init;
-    const response = await originalFetch.call(this, ...args);
+    const response = await originalFetch(...args);
     requestSubject.next({
         type: 'fetch',
         method,
