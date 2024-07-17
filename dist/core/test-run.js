@@ -42,7 +42,7 @@ export class TestRun {
         this.#report += `\x1b[1;32m${this.passed} passed\x1b[m, `;
         this.#report += `\x1b[1;91m${this.failed} failed\x1b[m, `;
         this.#report += `\x1b[2m${this.total} total\x1b[m\n`;
-        this.#report += `\x1b[1mDuration\x1b[m: ${TestRun.createDurationString(performance.now() - this.#timestampStart)}ms\n`;
+        this.#report += `\x1b[1mDuration\x1b[m: ${TestRun.createDurationString(performance.now() - this.#timestampStart)}\n`;
     }
     addToReport(value) {
         this.#report += value;
