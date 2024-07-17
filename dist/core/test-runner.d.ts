@@ -1,6 +1,8 @@
-import { Interceptor, MockFunction, MockFunctionImplementation, Test } from "./types.js";
+import { DescribeBlock, Interceptor, MockFunction, MockFunctionImplementation, Test } from "./types.js";
 export declare class TestRunner {
     #private;
+    root: DescribeBlock;
+    currentDescribeBlock: DescribeBlock;
     constructor();
     test(name: string, fn: Test['fn'], skip?: boolean): Promise<void>;
     describe(name: string, fn: any): Promise<void>;

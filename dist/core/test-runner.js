@@ -1,22 +1,27 @@
-import { AssertionError } from "./assertion.js";
+import { AssertionError } from "./assertions/index.js";
 import { MockFunctionFactory } from "./mock-function-factory.js";
 import { TestRun } from "./test-run.js";
+function formatValue(value) {
+    let output = '';
+    if (typeof value === 'string')
+        output = value;
+}
 export class TestRunner {
     #describeBlocks;
-    #root;
-    #currentDescribeBlock;
+    root;
+    currentDescribeBlock;
     #shouldSkip;
     #testRun;
     #beforeEachCallbacks;
     #beforeAllCallbacks;
     #started;
     #mockFunctions;
-    static #createDescribeBlock(name, isRoot = false) {
-        return { name, blocks: new Map(), tests: [], isRoot };
+    static #createDescribeBlock(name, parent, isRoot = false) {
+        return { name, blocks: new Map(), tests: [], isRoot, parent };
     }
     constructor() {
         this.#describeBlocks = [];
-        this.#root = this.#currentDescribeBlock = TestRunner.#createDescribeBlock('', true);
+        this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
         this.#shouldSkip = false;
         this.#testRun = new TestRun();
         this.#beforeEachCallbacks = [];
@@ -26,7 +31,7 @@ export class TestRunner {
     }
     #reset() {
         this.#describeBlocks = [];
-        this.#root = this.#currentDescribeBlock = TestRunner.#createDescribeBlock('', true);
+        this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
         this.#shouldSkip = false;
         this.#testRun = new TestRun();
         this.#started = false;
@@ -65,10 +70,12 @@ export class TestRunner {
                 catch (error) {
                     let errorMessage = '';
                     if (error instanceof AssertionError) {
-                        errorMessage = `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`;
+                        errorMessage += `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n`;
+                        errorMessage += `${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n`;
+                        errorMessage += `${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`;
                     }
                     else {
-                        errorMessage = `${' '.repeat(indent + 1)}${error.message}\n\n`;
+                        errorMessage += `${' '.repeat(indent + 1)}${error.message}\n\n`;
                         testRun.addToSummary(`${error.stack.split('\n').map((line) => `${' '.repeat(indent + 1)}${line}`).join('\n')}\n`);
                     }
                     testRun.addToSummary(`${'-'.repeat(20)}\n`);
@@ -88,13 +95,13 @@ export class TestRunner {
         }
     }
     async test(name, fn, skip = false) {
-        this.#currentDescribeBlock.tests.push({ name, fn, skip });
+        this.currentDescribeBlock.tests.push({ name, fn, skip });
     }
     async describe(name, fn) {
-        const newDescribeBlock = TestRunner.#createDescribeBlock(name);
+        const newDescribeBlock = TestRunner.#createDescribeBlock(name, this.currentDescribeBlock);
         const describeBlocks = this.#describeBlocks;
-        const root = this.#root;
-        this.#currentDescribeBlock = newDescribeBlock;
+        const root = this.root;
+        this.currentDescribeBlock = newDescribeBlock;
         describeBlocks.unshift(newDescribeBlock);
         await fn();
         let index = describeBlocks.length - 1;

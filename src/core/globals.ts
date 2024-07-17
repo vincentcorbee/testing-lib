@@ -29,7 +29,9 @@ export function beforeEach(fn) {
 }
 
 export async function describe(name: string, fn) {
-  await testRunner.describe(name, fn)
+  testRunner.describe(name, fn)
+
+  testRunner.currentDescribeBlock = testRunner.currentDescribeBlock.parent ?? testRunner.root
 }
 
 export function test(name: string, fn) {

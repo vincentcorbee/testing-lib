@@ -1,45 +1,8 @@
-// @ts-nocheck
-export class MatcherResult {
-  name: any
-  actual: any
-  expected: any
-  message: string
-  pass: boolean
+import { AssertionError } from "./assertion.error.js"
 
-  constructor(properties = {}) {
-    const { name, actual, expected, message, pass = true } = properties
-
-    this.name = name
-    this.actual = actual
-    this.expected = expected
-    this.message = message
-    this.pass = pass
-  }
-}
-
-export class AssertionError extends Error {
-  matcherResult: MatcherResult
-
-  constructor(matcherResultLike) {
-    const matcherResult = matcherResultLike instanceof MatcherResult ? matcherResultLike : new MatcherResult(matcherResultLike)
-
-    super(matcherResult.message)
-
-    this.matcherResult = matcherResult
-  }
-
-  toJSON() {
-    return this.matcherResult
-  }
-
-  toString() {
-    return JSON.stringify(this.toJSON());
-  }
-}
-
-export function expect(actual) {
+export function expect(actual: any) {
   const matchers = {
-    toEqual: (expected) => {
+    toEqual: (expected: any) => {
       if (actual !== expected) {
         throw new AssertionError({
           name: 'toEqual',
@@ -62,7 +25,7 @@ export function expect(actual) {
     },
     get resolves() {
       return {
-        toEqual: async (expected) => {
+        toEqual: async (expected: any) => {
           try {
             const resolvedValue = await actual
 
@@ -76,7 +39,7 @@ export function expect(actual) {
               })
             }
           }
-          catch(error) {
+          catch(error: any) {
             if (error instanceof AssertionError) throw error
 
             throw new AssertionError({

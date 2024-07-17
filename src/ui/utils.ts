@@ -1,4 +1,4 @@
-import { AssertionError } from '../core/assertion.js'
+import { AssertionError } from '../core/assertions/index.js'
 import { performAction } from '../shared/perform-action.js'
 
 export function dispatchEvent(selectorOrElement, eventType, payload = {}) {
@@ -9,7 +9,7 @@ export function dispatchEvent(selectorOrElement, eventType, payload = {}) {
 
     if (!element) throw new AssertionError({ name: 'dispatchEvent', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` })
 
-    let event
+    let event: Event | MouseEvent | FocusEvent | KeyboardEvent | undefined
 
     switch(eventType) {
       case 'click':

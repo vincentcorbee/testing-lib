@@ -20,7 +20,8 @@ export function beforeEach(fn) {
     testRunner.beforeEach(fn);
 }
 export async function describe(name, fn) {
-    await testRunner.describe(name, fn);
+    testRunner.describe(name, fn);
+    testRunner.currentDescribeBlock = testRunner.currentDescribeBlock.parent ?? testRunner.root;
 }
 export function test(name, fn) {
     testRunner.test(name, fn);

@@ -34,6 +34,7 @@ export type DescribeBlock = {
   blocks: Map<string, DescribeBlock>
   tests: Test[]
   isRoot: boolean
+  parent: DescribeBlock | null
 }
 
 export type Runner = {

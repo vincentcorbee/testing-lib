@@ -1,4 +1,4 @@
-import { AssertionError } from '../core/assertion.js';
+import { AssertionError } from '../core/assertions/index.js';
 import { performAction } from '../shared/perform-action.js';
 export function dispatchEvent(selectorOrElement, eventType, payload = {}) {
     return performAction((resolve, reject) => {
