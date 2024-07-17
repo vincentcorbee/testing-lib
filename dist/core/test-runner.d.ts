@@ -4,6 +4,7 @@ export declare class TestRunner {
     root: DescribeBlock;
     currentDescribeBlock: DescribeBlock;
     constructor();
+    get started(): boolean;
     test(name: string, fn: Test['fn'], skip?: boolean): Promise<void>;
     describe(name: string, fn: any): Promise<void>;
     mockFunction(mockImplementation?: MockFunctionImplementation): MockFunction;

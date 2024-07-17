@@ -2,29 +2,50 @@ export class TestRun {
     skipped;
     passed;
     failed;
-    #summary;
+    #started;
+    #report;
+    #timestampStart;
     constructor() {
         this.passed = 0;
         this.failed = 0;
         this.skipped = 0;
-        this.#summary = '';
+        this.#report = '';
+        this.#started = false;
+        this.#timestampStart = 0;
+    }
+    static createDurationString(duration) {
+        return duration > 10000 ? ` (${(duration / 1000).toFixed(2)} s)`.replace('.00', '') : duration > 1 ? ` (${duration.toFixed(2)} ms)`.replace('.00', '') : '';
     }
     get total() {
         return this.passed + this.failed + this.skipped;
     }
-    get summary() {
-        let result = this.#summary;
-        result += '\n';
-        result += this.failed === 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n';
-        result += '\n\x1b[1mTests\x1b[m: ';
-        result += `\x1b[1;93m${this.skipped} skipped\x1b[m, `;
-        result += `\x1b[1;32m${this.passed} passed\x1b[m, `;
-        result += `\x1b[1;91m${this.failed} failed\x1b[m, `;
-        result += `\x1b[2m${this.total} total\x1b[m\n`;
-        return result;
+    get report() {
+        return this.#report;
     }
-    addToSummary(value) {
-        this.#summary += value;
+    get started() {
+        return this.#started;
+    }
+    start() {
+        if (this.#started)
+            return;
+        this.#timestampStart = performance.now();
+        this.#started = true;
+    }
+    stop() {
+        if (!this.#started)
+            return;
+        this.#report += '\n';
+        this.#report += '\x1b[1mSummary\x1b[m\n\n';
+        this.#report += this.failed === 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n';
+        this.#report += '\n\x1b[1mTests\x1b[m: ';
+        this.#report += `\x1b[1;93m${this.skipped} skipped\x1b[m, `;
+        this.#report += `\x1b[1;32m${this.passed} passed\x1b[m, `;
+        this.#report += `\x1b[1;91m${this.failed} failed\x1b[m, `;
+        this.#report += `\x1b[2m${this.total} total\x1b[m\n`;
+        this.#report += `\x1b[1mDuration\x1b[m: ${TestRun.createDurationString(performance.now() - this.#timestampStart)}ms\n`;
+    }
+    addToReport(value) {
+        this.#report += value;
     }
 }
 //# sourceMappingURL=test-run.js.map

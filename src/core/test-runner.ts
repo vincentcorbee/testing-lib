@@ -3,12 +3,6 @@ import { MockFunctionFactory } from "./mock-function-factory.js"
 import { TestRun } from "./test-run.js"
 import { DescribeBlock, Interceptor, MockFunction, MockFunctionImplementation, Test } from "./types.js"
 
-function formatValue(value: any) {
-  let output = ''
-
-  if (typeof value === 'string') output = value
-}
-
 export class TestRunner {
   #describeBlocks: DescribeBlock[]
   root: DescribeBlock
@@ -17,7 +11,6 @@ export class TestRunner {
   #testRun: TestRun
   #beforeEachCallbacks: (() => void | Promise<void>)[]
   #beforeAllCallbacks:  (() => void | Promise<void>)[]
-  #started: boolean
 
   #mockFunctions: MockFunction[]
 
@@ -32,7 +25,6 @@ export class TestRunner {
     this.#testRun = new TestRun()
     this.#beforeEachCallbacks = []
     this.#beforeAllCallbacks = []
-    this.#started = false
     this.#mockFunctions = []
   }
 
@@ -41,7 +33,6 @@ export class TestRunner {
     this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true)
     this.#shouldSkip = false
     this.#testRun = new TestRun()
-    this.#started = false
     this.#beforeAllCallbacks = []
     this.#beforeEachCallbacks = []
   }
@@ -50,12 +41,12 @@ export class TestRunner {
     const testRun = this.#testRun
     const beforeEachCallbacks = this.#beforeEachCallbacks
 
-    if (!describeBlock.isRoot) testRun.addToSummary(`${' '.repeat(indent)}\x1b[1m${describeBlock.name}\x1b[m\n`)
+    if (!describeBlock.isRoot) testRun.addToReport(`${' '.repeat(indent)}\x1b[1m${describeBlock.name}\x1b[m\n`)
 
     const { tests } = describeBlock
 
-    if(!this.#started) {
-      this.#started = true
+    if(!testRun.started) {
+      testRun.start()
 
       for (const callback of this.#beforeAllCallbacks) {
         await callback()
@@ -66,37 +57,48 @@ export class TestRunner {
       const { name, fn, skip = false } = test
 
       if (!this.#shouldSkip && !skip) {
-          try {
-            for (const callback of beforeEachCallbacks) {
-              await callback()
-            }
+        const start = performance.now()
 
-            const returnValue = fn()
+        try {
+          for (const callback of beforeEachCallbacks) {
+            await callback()
+          }
 
-            if (returnValue instanceof Promise) {
-              await returnValue
-            } else if(returnValue !== undefined){
-              throw Error(`${returnValue} is not allowed return value from test function`)
-            }
+          const returnValue = fn()
 
-            testRun.passed++
+          if (returnValue instanceof Promise) {
+            await returnValue
+          } else if(returnValue !== undefined){
+            throw Error(`${returnValue} is not allowed return value from test function`)
+          }
 
-          testRun.addToSummary(`${' '.repeat(indent + 1)}\x1b[32;1m✓\x1b[m \x1b[90m${name}\x1b[m\n`)
+          testRun.passed++
+
+          testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[32;1m✓\x1b[m \x1b[90m${name}${TestRun.createDurationString(performance.now() - start)}\x1b[m\n`)
         } catch (error: any) {
           let errorMessage = ''
 
           if (error instanceof AssertionError) {
-            errorMessage += `${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}\x1b[m\n\n`
+            testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}${TestRun.createDurationString(performance.now() - start)}\x1b[m\n\n`)
             errorMessage += `${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n`
-            errorMessage += `${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n\n`
+            errorMessage += `${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n`
           } else {
             errorMessage += `${' '.repeat(indent + 1)}${error.message}\n\n`
-            testRun.addToSummary(`${error.stack.split('\n').map((line: string) => `${' '.repeat(indent + 1)}${line}`).join('\n')}\n`);
+            testRun.addToReport(`${error.stack.split('\n').map((line: string) => `${' '.repeat(indent + 1)}${line}`).join('\n')}\n`);
           }
 
-          testRun.addToSummary(`${'-'.repeat(20)}\n`)
-          testRun.addToSummary(errorMessage)
-          testRun.addToSummary(`${'-'.repeat(20)}\n`)
+          let parentDescribeBlock: DescribeBlock | null = describeBlock
+
+          let trace = `${parentDescribeBlock.name} › `
+
+          while(parentDescribeBlock = parentDescribeBlock.parent ) {
+            if(parentDescribeBlock.isRoot === false) trace = `${parentDescribeBlock.name} › ${trace}`
+          }
+
+          testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[91;1m● ${trace}${name}\x1b[m\n`)
+          testRun.addToReport(`\n`)
+          testRun.addToReport(errorMessage)
+          testRun.addToReport(`\n`)
 
           this.#shouldSkip = true
 
@@ -104,13 +106,17 @@ export class TestRunner {
         }
       } else {
         testRun.skipped++
-        testRun.addToSummary(`${' '.repeat(indent + 1)}\x1b[93;1m○\x1b[m \x1b[90m\x1b[1mskipped\x1b[22m: ${name}\x1b[m\n`)
+        testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[93;1m○\x1b[m \x1b[90m\x1b[1mskipped\x1b[22m: ${name}\x1b[m\n`)
       }
     }
 
     for (const block of [...describeBlock.blocks.values()]) {
       await this.#traverseDescribeBlock(block, !describeBlock.isRoot ? indent + 1 : indent)
     }
+  }
+
+  get started() {
+    return this.#testRun.started
   }
 
   async test(name: string, fn: Test['fn'], skip = false) {
@@ -153,7 +159,9 @@ export class TestRunner {
 
       await this.#traverseDescribeBlock(root, 0)
 
-      console.log(this.#testRun.summary)
+      this.#testRun.stop()
+
+      console.log(this.#testRun.report)
 
       this.#reset()
     } else {
