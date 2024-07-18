@@ -4,7 +4,7 @@ export async function waitForRequest(path: string, predicate: any) {
   return new Promise((resolve, reject) => {
     let called = false
 
-    const subscription = requestSubject.subscribe({ next: async data => {
+    const subscription = requestSubject.subscribe({ next: async (data: any) => {
       called = true
 
       if(data.url.pathname === path) {

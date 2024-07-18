@@ -1,1 +1,1 @@
-export declare function waitForNavigation(path: any, timeout?: number): Promise<unknown>;
+export declare function waitForNavigation(path: string | RegExp, timeout?: number): Promise<unknown>;

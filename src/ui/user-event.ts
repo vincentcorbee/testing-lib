@@ -1,39 +1,75 @@
-import { dispatchEvent } from './utils.js'
 import { AssertionError } from '../core/assertions/index.js'
 import { performAction } from '../shared/perform-action.js'
 
-export const click = (selectorOrElement: string | HTMLElement) => dispatchEvent(selectorOrElement, 'click')
-
-export const blur = (selectorOrElement: string | HTMLElement) => dispatchEvent(selectorOrElement, 'blur')
-
-export const keyup = (selectorOrElement: string | HTMLElement, key: string) => dispatchEvent(selectorOrElement, 'keyup', { key })
-
-export function setInput (selectorOrElement: string | HTMLInputElement, value: any) {
-  return performAction(async resolve => {
+export function fireEvent(selectorOrElement: string | Element, eventType: string, payload = {}) {
+  return performAction((resolve, reject) => {
     const element = typeof selectorOrElement === 'string'
       ? document.querySelector(selectorOrElement)
       : selectorOrElement
 
+    if (!element) throw new AssertionError({ name: 'dispatchEvent', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` })
+
+    let event: Event | MouseEvent | FocusEvent | KeyboardEvent | undefined
+
+    switch(eventType) {
+      case 'click':
+        event = new MouseEvent(eventType, { bubbles: true, ...payload })
+        break
+      case 'blur':
+        event = new FocusEvent(eventType, { bubbles: true, ...payload })
+        break;
+      case 'change':
+      case 'input':
+        event = new Event(eventType, { bubbles: true, ...payload})
+        break
+      case 'keyup':
+        event = new KeyboardEvent(eventType, { bubbles: true, ...payload})
+        break
+      default:
+          break
+    }
+
+    if (!event) reject(Error(`Unsupported event ${eventType}`))
+    else {
+        element.dispatchEvent(event)
+
+        resolve()
+    }
+  })
+}
+
+export const click = (selectorOrElement: string | Element) => fireEvent(selectorOrElement, 'click')
+
+export const blur = (selectorOrElement: string | Element) => fireEvent(selectorOrElement, 'blur')
+
+export const keyup = (selectorOrElement: string | Element, key: string) => fireEvent(selectorOrElement, 'keyup', { key })
+
+export function setInput<E extends HTMLInputElement | HTMLSelectElement>(selectorOrElement: string | E, value: any) {
+  return performAction(async resolve => {
+    const element = typeof selectorOrElement === 'string'
+      ? document.querySelector<E>(selectorOrElement)
+      : selectorOrElement
+
     if (!element) throw new AssertionError({ name: 'setInput', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` });
 
-    (element as HTMLInputElement).focus()
+    element.focus()
 
     /* To trigger event in React */
     const nativeInputValueSetter = Reflect.getOwnPropertyDescriptor(Reflect.getPrototypeOf(element)!, 'value')?.set
 
     if(nativeInputValueSetter) nativeInputValueSetter.call(element, value)
 
-    await dispatchEvent(element, 'change')
-    await dispatchEvent(element, 'input')
+    await fireEvent(element, 'change')
+    await fireEvent(element, 'input')
 
     resolve()
   })
 }
 
-export function setInputFile (selectorOrElement, files) {
+export function setInputFile (selectorOrElement: string | HTMLInputElement, ...files: File[]) {
   return performAction(async resolve => {
     const element = typeof selectorOrElement === 'string'
-      ? document.querySelector(selectorOrElement)
+      ? document.querySelector<HTMLInputElement>(selectorOrElement)
       : selectorOrElement
 
     if (!element) throw new AssertionError({ name: 'setInputFile', expected: `Element with ${selectorOrElement}`, actual: element, pass: false, message: `${selectorOrElement} not found` })
@@ -44,12 +80,12 @@ export function setInputFile (selectorOrElement, files) {
 
     element.files = dataTransfer.files
 
-    await dispatchEvent(element, 'change')
+    await fireEvent(element, 'change')
 
     resolve()
   })
 }
 
-export function setSelect (selectorOrElement, value) {
+export function setSelect (selectorOrElement: HTMLSelectElement | string, value: any) {
   return setInput(selectorOrElement, value)
 }

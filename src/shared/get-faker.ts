@@ -3,7 +3,8 @@ import { performAction } from "./perform-action.js"
 
 export function getFaker() {
   if (env === 'node') {
-    return Promise.resolve()
+    /* Not implemented */
+    return Promise.resolve({})
   } else {
     if (!document.getElementById('faker-js')) {
       const scriptTag = document.createElement('script')
