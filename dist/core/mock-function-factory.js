@@ -38,7 +38,7 @@ export function MockFunctionFactory(mockImplementation = noop, intercept) {
                 return {
                     calls: [...calls],
                     contexts: [...contexts],
-                    results: [...results]
+                    results: [...results],
                 };
             }
             if (prop === 'clear')
@@ -47,7 +47,7 @@ export function MockFunctionFactory(mockImplementation = noop, intercept) {
                 return reset;
             if (prop === 'restore')
                 return restore;
-        }
+        },
     };
     if (intercept) {
         const { object, methodName } = intercept;

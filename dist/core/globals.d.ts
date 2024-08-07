@@ -1,8 +1,10 @@
-import { TestRunner } from "./test-runner.js";
-import { Runner } from "./types.js";
+import { TestRunner } from './test-runner.js';
+import { AfterAllCallback, AfterEachCallback, BeforeAllCallback, BeforeEachCallback, DescribeCallback, Runner, TestCallback } from './types.js';
 export declare const testRunner: TestRunner;
-export declare function beforeAll(fn: any): void;
-export declare function beforeEach(fn: any): void;
-export declare function describe(name: string, fn: any): Promise<void>;
-export declare function test(name: string, fn: any): void;
+export declare function beforeAll(fn: BeforeAllCallback): void;
+export declare function beforeEach(fn: BeforeEachCallback): void;
+export declare function afterAll(fn: AfterAllCallback): void;
+export declare function afterEach(fn: AfterEachCallback): void;
+export declare function describe(name: string, fn: DescribeCallback): Promise<void>;
+export declare function test(name: string, fn: TestCallback): void;
 export declare const runner: Runner;

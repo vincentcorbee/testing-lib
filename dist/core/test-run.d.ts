@@ -4,7 +4,7 @@ export declare class TestRun {
     passed: number;
     failed: number;
     constructor();
-    static createDurationString(duration: number): string;
+    static createDurationString(duration: number, min?: number): string;
     get total(): number;
     get report(): string;
     get started(): boolean;

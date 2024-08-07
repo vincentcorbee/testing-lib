@@ -1,5 +1,5 @@
-import { env } from "./env.js";
-import { performAction } from "./perform-action.js";
+import { env } from './env.js';
+import { waitFor } from './wait-for.js';
 export function getFaker() {
     if (env === 'node') {
         /* Not implemented */
@@ -16,7 +16,7 @@ export function getFaker() {
             document.head.appendChild(scriptTag);
         }
     }
-    return performAction(resolve => {
+    return waitFor((resolve) => {
         if (globalThis.faker)
             resolve(globalThis.faker);
         else

@@ -1,2 +1,2 @@
-export { expect } from './assertions/assertion.js';
-export { describe, test, beforeEach, beforeAll, runner } from './globals.js';
+export { expect } from './assertions/expect.js';
+export { describe, test, beforeEach, beforeAll, afterAll, afterEach, runner } from './globals.js';

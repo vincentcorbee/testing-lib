@@ -1,137 +1,260 @@
-import { AssertionError } from "./assertions/index.js";
-import { MockFunctionFactory } from "./mock-function-factory.js";
-import { TestRun } from "./test-run.js";
+import { AssertionError } from './assertions/index.js';
+import { MockFunctionFactory } from './mock-function-factory.js';
+import { TestRun } from './test-run.js';
+function formatStacktrace(stack, indent) {
+    return `\x1b[91m${stack
+        .split('\n')
+        .map((line) => `${createIndentation(indent)}${line}`)
+        .join('\n')}\x1b[m`;
+}
+function createReceivedMessage(received) {
+    return `\x1b[mReceived: \x1b[91;1m"${received}"\x1b[m`;
+}
+function createExpectedMessage(expected, modifier) {
+    return `Expected:${modifier ? ` ${modifier}` : ''} \x1b[92;1m"${expected}\x1b[m"`;
+}
+function createTestMessage(name, durationString, passed) {
+    const icon = passed ? '\x1b[32;1m✓\x1b[m' : '\x1b[91;1m✕\x1b[m';
+    return `${icon} \x1b[90m${name}${durationString ? ` (${durationString})` : ''}\x1b[m`;
+}
+function createIndentation(indent) {
+    return ' '.repeat(indent);
+}
+function createSkippedMessage(name) {
+    return `\x1b[93;1m○\x1b[m \x1b[90m\x1b[1mskipped\x1b[22m: ${name}\x1b[m`;
+}
+function createTrace(describeBlock, testBlock) {
+    let trace = [];
+    let parentDescribeBlock = describeBlock;
+    if (testBlock)
+        trace.push(testBlock.name);
+    while (parentDescribeBlock) {
+        if (parentDescribeBlock.isRoot === false)
+            trace.unshift(parentDescribeBlock.name);
+        parentDescribeBlock = parentDescribeBlock.parent;
+    }
+    return `\x1b[91;1m● ${trace.join(' › ')}\x1b[m`;
+}
 export class TestRunner {
     #describeBlocks;
     root;
     currentDescribeBlock;
     #shouldSkip;
+    #hasOnly;
     #testRun;
-    #beforeEachCallbacks;
-    #beforeAllCallbacks;
     #mockFunctions;
-    static #createDescribeBlock(name, parent, isRoot = false) {
-        return { name, blocks: new Map(), tests: [], isRoot, parent };
+    static #createDescribeBlock(name, parent, isRoot = false, skip = false, only = false) {
+        return {
+            type: 'describe',
+            name,
+            blocks: [],
+            isRoot,
+            parent,
+            skip: parent?.skip || skip,
+            only: parent?.only || only,
+            beforeAllCallbacks: [],
+            beforeEachCallbacks: [...(parent?.beforeEachCallbacks ?? [])],
+            afterAllCallbacks: [],
+            afterEachCallbacks: [],
+        };
+    }
+    static #crateTestBlock(name, fn, skip = false, only = false) {
+        return {
+            type: 'test',
+            name,
+            fn,
+            skip,
+            only,
+        };
     }
     constructor() {
         this.#describeBlocks = [];
         this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
         this.#shouldSkip = false;
+        this.#hasOnly = false;
         this.#testRun = new TestRun();
-        this.#beforeEachCallbacks = [];
-        this.#beforeAllCallbacks = [];
         this.#mockFunctions = [];
     }
     #reset() {
         this.#describeBlocks = [];
         this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
         this.#shouldSkip = false;
+        this.#hasOnly = false;
         this.#testRun = new TestRun();
-        this.#beforeAllCallbacks = [];
-        this.#beforeEachCallbacks = [];
+        this.#mockFunctions = [];
     }
-    async #traverseDescribeBlock(describeBlock, indent = 0) {
+    #shouldRunTest({ only = false, skip = false }) {
+        if (this.#shouldSkip)
+            return false;
+        if (skip)
+            return false;
+        if (this.#hasOnly)
+            return only;
+        return true;
+    }
+    async #startTestRun() {
+        this.#testRun.start();
+        this.#testRun.addToReport(await this.#executeDescribe(this.root, 0));
+        this.#testRun.stop();
+    }
+    #handleError(error, indent, describeBlock, test) {
+        let report = '';
+        let errorMessage = '';
+        let chain = '';
+        if (error instanceof AssertionError) {
+            const { matcherResult } = error;
+            const { context, expected, actual } = matcherResult;
+            if (context && !context.parent)
+                context.parent = { name: 'expect', type: 'expect', value: actual, parent: null };
+            chain = matcherResult.chain;
+            switch (context?.parent?.name) {
+                case 'not':
+                    errorMessage += `${createIndentation(indent + 1)}${createExpectedMessage(expected, context?.parent?.name)}\n`;
+                    break;
+                default:
+                    errorMessage += `${createIndentation(indent + 1)}${createExpectedMessage(expected)}\n`;
+                    errorMessage += `${createIndentation(indent + 1)}${createReceivedMessage(actual)}\n`;
+            }
+        }
+        else {
+            errorMessage += `${createIndentation(indent + 1)}Error message: ${error.message}`;
+            report += `${formatStacktrace(error.stack, indent + 1)}\n\n`;
+        }
+        report += `${createIndentation(indent)}${createTrace(describeBlock, test)}\n`;
+        if (chain)
+            report += `\n${createIndentation(indent + 1)}${chain}\n`;
+        report += `\n${errorMessage}\n`;
+        return report;
+    }
+    async #executeTest(test, describeBlock, indent = 0) {
         const testRun = this.#testRun;
-        const beforeEachCallbacks = this.#beforeEachCallbacks;
-        if (!describeBlock.isRoot)
-            testRun.addToReport(`${' '.repeat(indent)}\x1b[1m${describeBlock.name}\x1b[m\n`);
-        const { tests } = describeBlock;
-        if (!testRun.started) {
-            testRun.start();
-            for (const callback of this.#beforeAllCallbacks) {
+        const { name, fn } = test;
+        const { beforeEachCallbacks, afterEachCallbacks } = describeBlock;
+        let report = '';
+        if (this.#shouldRunTest(test)) {
+            const start = performance.now();
+            try {
+                /* Run beforeEach callbacks */
+                for (const callback of beforeEachCallbacks)
+                    await callback();
+                const returnValue = fn();
+                if (returnValue instanceof Promise) {
+                    await returnValue;
+                }
+                else if (returnValue !== undefined) {
+                    throw Error(`${returnValue} is not allowed return value from test function`);
+                }
+                testRun.passed++;
+                report += `${createIndentation(indent + 1)}${createTestMessage(name, TestRun.createDurationString(performance.now() - start), true)}\n`;
+            }
+            catch (error) {
+                report += `${createIndentation(indent + 1)}${createTestMessage(name, TestRun.createDurationString(performance.now() - start), false)}\n\n`;
+                report += this.#handleError(error, indent + 1, describeBlock, test);
+                /* Bail from the test run */
+                this.#shouldSkip = true;
+                testRun.failed++;
+            }
+            finally {
+                for (const callback of afterEachCallbacks)
+                    await callback();
+            }
+        }
+        else {
+            testRun.skipped++;
+            report += `${createIndentation(indent + 1)}${createSkippedMessage(name)}\n`;
+        }
+        return report;
+    }
+    async #executeBlocks(blocks, describeBlock, indent) {
+        const { isRoot } = describeBlock;
+        let describeReport = '';
+        let testReport = '';
+        for (const block of blocks) {
+            const { type } = block;
+            if (type === 'describe')
+                describeReport += await this.#executeDescribe(block, isRoot ? indent : indent + 1);
+            if (type === 'test')
+                testReport += await this.#executeTest(block, describeBlock, indent);
+        }
+        return { describeReport, testReport };
+    }
+    async #executeDescribe(describeBlock, indent = 0) {
+        const { name: blockName, isRoot, beforeAllCallbacks, afterAllCallbacks, blocks } = describeBlock;
+        let report = '';
+        if (!isRoot)
+            report += `${createIndentation(indent)}\x1b[1m${blockName}\x1b[m\n`;
+        let testReport = '';
+        let describeReport = '';
+        try {
+            for (const callback of beforeAllCallbacks)
                 await callback();
-            }
+            const reports = await this.#executeBlocks(blocks, describeBlock, indent);
+            describeReport += reports.describeReport;
+            testReport += reports.testReport;
+            for (const callback of afterAllCallbacks)
+                await callback();
         }
-        for (const test of tests) {
-            const { name, fn, skip = false } = test;
-            if (!this.#shouldSkip && !skip) {
-                const start = performance.now();
-                try {
-                    for (const callback of beforeEachCallbacks) {
-                        await callback();
-                    }
-                    const returnValue = fn();
-                    if (returnValue instanceof Promise) {
-                        await returnValue;
-                    }
-                    else if (returnValue !== undefined) {
-                        throw Error(`${returnValue} is not allowed return value from test function`);
-                    }
-                    testRun.passed++;
-                    testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[32;1m✓\x1b[m \x1b[90m${name}${TestRun.createDurationString(performance.now() - start)}\x1b[m\n`);
-                }
-                catch (error) {
-                    let errorMessage = '';
-                    if (error instanceof AssertionError) {
-                        testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[91;1m✕\x1b[m \x1b[90m${name}${TestRun.createDurationString(performance.now() - start)}\x1b[m\n\n`);
-                        errorMessage += `${' '.repeat(indent + 1)}Expected: \x1b[92;1m"${error.matcherResult.expected}"\n`;
-                        errorMessage += `${' '.repeat(indent + 1)}\x1b[mReceived: \x1b[91;1m"${error.matcherResult.actual}"\x1b[m\n`;
-                    }
-                    else {
-                        errorMessage += `${' '.repeat(indent + 1)}${error.message}\n\n`;
-                        testRun.addToReport(`${error.stack.split('\n').map((line) => `${' '.repeat(indent + 1)}${line}`).join('\n')}\n`);
-                    }
-                    let parentDescribeBlock = describeBlock;
-                    let trace = `${parentDescribeBlock.name} › `;
-                    while (parentDescribeBlock = parentDescribeBlock.parent) {
-                        if (parentDescribeBlock.isRoot === false)
-                            trace = `${parentDescribeBlock.name} › ${trace}`;
-                    }
-                    testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[91;1m● ${trace}${name}\x1b[m\n`);
-                    testRun.addToReport(`\n`);
-                    testRun.addToReport(errorMessage);
-                    testRun.addToReport(`\n`);
-                    this.#shouldSkip = true;
-                    testRun.failed++;
-                }
-            }
-            else {
-                testRun.skipped++;
-                testRun.addToReport(`${' '.repeat(indent + 1)}\x1b[93;1m○\x1b[m \x1b[90m\x1b[1mskipped\x1b[22m: ${name}\x1b[m\n`);
-            }
+        catch (error) {
+            report += this.#handleError(error, indent, describeBlock);
+            /* Unwind tests for reporting */
+            this.#shouldSkip = true;
+            const reports = await this.#executeBlocks(blocks, describeBlock, indent);
+            describeReport += reports.describeReport;
+            testReport += reports.testReport;
         }
-        for (const block of [...describeBlock.blocks.values()]) {
-            await this.#traverseDescribeBlock(block, !describeBlock.isRoot ? indent + 1 : indent);
-        }
+        /* Ouput test report before nested describe blocks */
+        return report + testReport + describeReport;
     }
     get started() {
         return this.#testRun.started;
     }
-    async test(name, fn, skip = false) {
-        this.currentDescribeBlock.tests.push({ name, fn, skip });
+    async test(name, fn, skip, only) {
+        const { currentDescribeBlock } = this;
+        currentDescribeBlock.blocks.push(TestRunner.#crateTestBlock(name, fn, currentDescribeBlock.skip || skip, currentDescribeBlock.only || only));
+        if (only)
+            this.#hasOnly = true;
     }
-    async describe(name, fn) {
-        const newDescribeBlock = TestRunner.#createDescribeBlock(name, this.currentDescribeBlock);
+    async describe(name, fn, skip, only) {
+        const { currentDescribeBlock, root } = this;
+        const describeBlock = TestRunner.#createDescribeBlock(name, currentDescribeBlock, false, skip, only);
         const describeBlocks = this.#describeBlocks;
-        const root = this.root;
-        this.currentDescribeBlock = newDescribeBlock;
-        describeBlocks.unshift(newDescribeBlock);
+        if (only)
+            this.#hasOnly = true;
+        this.currentDescribeBlock = describeBlock;
+        describeBlocks.unshift(describeBlock);
+        const index = currentDescribeBlock.blocks.length;
+        // @ts-ignore
+        currentDescribeBlock.blocks.push(name);
         await fn();
-        let index = describeBlocks.length - 1;
-        while (index >= -1) {
-            if (index === -1)
+        describeBlock.afterEachCallbacks.push(...currentDescribeBlock.afterEachCallbacks);
+        let i = describeBlocks.length - 1;
+        while (i >= -1) {
+            if (i === -1)
                 break;
-            if (describeBlocks[index] === newDescribeBlock)
+            if (describeBlocks[i] === describeBlock)
                 break;
-            index--;
+            i--;
         }
         let parentDescribeBlock;
-        if (index !== -1) {
-            describeBlocks.splice(index, 1);
-            parentDescribeBlock = describeBlocks[index] ?? root;
+        if (i !== -1) {
+            describeBlocks.splice(i, 1);
+            parentDescribeBlock = describeBlocks[i] ?? root;
         }
         else {
             parentDescribeBlock = root;
         }
+        /*
+          We should have no more describe blocks so we have reached the end of the test suite.
+        */
         if (describeBlocks.length === 0) {
-            root.blocks.set(name, newDescribeBlock);
-            await this.#traverseDescribeBlock(root, 0);
-            this.#testRun.stop();
+            root.blocks[index] = describeBlock;
+            // root.blocks.push(describeBlock);
+            await this.#startTestRun();
             console.log(this.#testRun.report);
             this.#reset();
         }
         else {
-            parentDescribeBlock.blocks.set(name, newDescribeBlock);
+            parentDescribeBlock.blocks[index] = describeBlock;
         }
     }
     mockFunction(mockImplementation) {
@@ -143,10 +266,16 @@ export class TestRunner {
         return MockFunctionFactory(interceptor, { object, methodName });
     }
     beforeAll(fn) {
-        this.#beforeAllCallbacks.push(fn);
+        this.currentDescribeBlock.beforeAllCallbacks.push(fn);
     }
     beforeEach(fn) {
-        this.#beforeEachCallbacks.push(fn);
+        this.currentDescribeBlock.beforeEachCallbacks.push(fn);
+    }
+    afterAll(fn) {
+        this.currentDescribeBlock.afterAllCallbacks.push(fn);
+    }
+    afterEach(fn) {
+        this.currentDescribeBlock.afterEachCallbacks.push(fn);
     }
     clearAllMock() {
         for (const mockFunction of this.#mockFunctions) {

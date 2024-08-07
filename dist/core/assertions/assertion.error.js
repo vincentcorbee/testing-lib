@@ -1,4 +1,4 @@
-import { MatcherResult } from "./matcher-result.js";
+import { MatcherResult } from './matcher-result.js';
 export class AssertionError extends Error {
     matcherResult;
     constructor(matcherResultLike) {

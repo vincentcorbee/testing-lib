@@ -1,1 +1,1 @@
-export const env = typeof Window === 'function' ? 'browser' : 'node'
+export const env = typeof Window === 'function' ? 'browser' : 'node';

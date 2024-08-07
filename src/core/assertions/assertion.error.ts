@@ -1,18 +1,20 @@
-import { MatcherResult, MatcherResultProperties } from "./matcher-result.js"
+import { MatcherResultInterface } from '../types.js';
+import { MatcherResult } from './matcher-result.js';
 
 export class AssertionError extends Error {
-  matcherResult: MatcherResult
+  matcherResult: MatcherResult;
 
-  constructor(matcherResultLike: MatcherResult | MatcherResultProperties) {
-    const matcherResult = matcherResultLike instanceof MatcherResult ? matcherResultLike : new MatcherResult(matcherResultLike)
+  constructor(matcherResultLike: MatcherResult | MatcherResultInterface) {
+    const matcherResult =
+      matcherResultLike instanceof MatcherResult ? matcherResultLike : new MatcherResult(matcherResultLike);
 
-    super(matcherResult.message)
+    super(matcherResult.message);
 
-    this.matcherResult = matcherResult
+    this.matcherResult = matcherResult;
   }
 
   toJSON() {
-    return this.matcherResult
+    return this.matcherResult;
   }
 
   toString() {

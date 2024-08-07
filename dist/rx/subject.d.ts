@@ -1,19 +1,9 @@
-export declare class Subscriber {
+import { Subscription } from './subscription.js';
+import { Observer } from './types.js';
+export declare class Subject<T> {
     #private;
-    constructor(observer: any);
-    next(value: any): void;
+    next(value: T): void;
     error(error: any): void;
     complete(): void;
-}
-export declare class Subscription {
-    #private;
-    constructor(teardownLogic?: () => void);
-    unsubscribe(): void;
-}
-export declare class Subject {
-    #private;
-    next(value: any): void;
-    error(value: any): void;
-    completed(value: any): void;
-    subscribe(observer: any): Subscription;
+    subscribe(observer: Observer<T>): Subscription<unknown>;
 }

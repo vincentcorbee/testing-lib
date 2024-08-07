@@ -1,3 +1,3 @@
 export * from './assertion.error.js';
-export * from './assertion.js';
+export * from './expect.js';
 //# sourceMappingURL=index.js.map

@@ -1,15 +1,12 @@
-export type MatcherResultProperties = {
-    name?: string | undefined;
-    actual?: any;
-    expected?: any;
-    message?: string | undefined;
-    pass?: boolean | undefined;
-};
+import { ExpectContext, MatcherResultInterface } from '../types.js';
 export declare class MatcherResult {
     name: any;
     actual: any;
     expected: any;
     message: string;
     pass: boolean;
-    constructor(properties?: MatcherResultProperties);
+    modifier?: 'not' | 'resolves';
+    context?: ExpectContext;
+    constructor(properties?: MatcherResultInterface);
+    get chain(): string;
 }

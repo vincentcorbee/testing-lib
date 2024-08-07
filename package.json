@@ -6,13 +6,20 @@
   "type": "module",
   "scripts": {
     "build": "pnpm clean && tsc",
+    "watch": "pnpm clean && tsc -w",
     "clean": "rm -rf dist",
-    "package:patch": "pnpm version patch"
+    "package:patch": "pnpm version patch",
+    "server": "pnpm nodemon --exec node --loader ts-node/esm ./server/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^20.14.11",
+    "jsdoc": "^4.0.3",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }
 }

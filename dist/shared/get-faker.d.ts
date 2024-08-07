@@ -1,1 +1,1 @@
-export declare function getFaker(): Promise<unknown>;
+export declare function getFaker(): Promise<undefined> | Promise<{}>;

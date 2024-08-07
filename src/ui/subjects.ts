@@ -1,3 +1,7 @@
-import { Subject } from '../rx/index.js'
+import { Subject } from '../rx/index.js';
 
-export const navigationSubject = new Subject()
+export type HistoryEvent = {
+  url: string | null;
+};
+
+export const navigationSubject = new Subject<HistoryEvent>();

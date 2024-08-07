@@ -13,8 +13,12 @@ export class TestRun {
         this.#started = false;
         this.#timestampStart = 0;
     }
-    static createDurationString(duration) {
-        return duration > 10000 ? ` (${(duration / 1000).toFixed(2)} s)`.replace('.00', '') : duration > 1 ? ` (${duration.toFixed(2)} ms)`.replace('.00', '') : '';
+    static createDurationString(duration, min = 1) {
+        return duration > 10000
+            ? `${(duration / 1000).toFixed(2)} s`.replace('.00', '')
+            : duration > min
+                ? `${duration.toFixed(2)} ms`.replace('.00', '')
+                : '';
     }
     get total() {
         return this.passed + this.failed + this.skipped;
@@ -42,7 +46,7 @@ export class TestRun {
         this.#report += `\x1b[1;32m${this.passed} passed\x1b[m, `;
         this.#report += `\x1b[1;91m${this.failed} failed\x1b[m, `;
         this.#report += `\x1b[2m${this.total} total\x1b[m\n`;
-        this.#report += `\x1b[1mDuration\x1b[m: ${TestRun.createDurationString(performance.now() - this.#timestampStart)}\n`;
+        this.#report += `\x1b[1mDuration\x1b[m: ${TestRun.createDurationString(performance.now() - this.#timestampStart, -1)}\n`;
     }
     addToReport(value) {
         this.#report += value;

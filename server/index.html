@@ -1,0 +1,166 @@
+<html>
+  <head>
+    <title>My First Web Server</title>
+    <style>
+      .row:not(:last-child) {
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hello, World!</h1>
+    <div>
+      <h3>Sign up</h3>
+      <label> <input type="checkbox" /> Subscribe </label>
+      <br />
+      <button>Submit</button>
+      <div role="button">button</div>
+    </div>
+    <div class="row">
+      <label for="firstname">Firstname</label>
+      <input type="text" data-e2e="firstname" name="firstname" id="firstname" />
+    </div>
+
+    <div class="row">
+      <label for="lastname">Lastname</label>
+      <input type="text" data-e2e="lastname" name="lastname" id="lastname" />
+    </div>
+
+    <div class="row">
+      <input type="email" placeholder="name@example.com" />
+    </div>
+
+    <div class="row">
+      <label for="gender">Gender</label>
+      <select id="gender" name="gender" data-e2e="gender" multiple>
+        <option value="m">Male</option>
+        <option value="f">Female</option>
+      </select>
+    </div>
+    <div class="row">
+      <button type="button" data-e2e="button">
+        <div>></div>
+        Click
+      </button>
+    </div>
+    <div>
+      <div data-e2e="output"></div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "e2e": "http://localhost:8000/index.js"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as e2e from 'e2e';
+
+      window.e2e = e2e;
+    </script>
+    <script type="module">
+      const App = {
+        data: {
+          firstname: '',
+          lastname: '',
+          gender: '',
+        },
+        DOM: {
+          firstname: document.querySelector('[data-e2e="firstname"]'),
+          lastname: document.querySelector('[data-e2e="lastname"]'),
+          output: document.querySelector('[data-e2e="output"]'),
+          gender: document.querySelector('[data-e2e="gender"]'),
+          button: document.querySelector('[data-e2e="button"]'),
+        },
+        addListeners() {
+          const {
+            DOM: { firstname, lastname, gender, button, output },
+            data,
+          } = this;
+
+          firstname.addEventListener('change', (e) => {
+            data.firstname = e.target.value;
+          });
+
+          lastname.addEventListener('change', (e) => {
+            data.lastname = e.target.value;
+          });
+
+          gender.addEventListener('change', (e) => {
+            data.gender = e.target.value;
+          });
+
+          button.addEventListener('click', () => {
+            output.innerHTML = `Hello, ${data.firstname} ${data.lastname}!`;
+          });
+
+          output.addEventListener('click', () => {
+            console.log('click');
+          });
+        },
+        init() {
+          this.addListeners();
+          // this.DOM.output.style.width = '0%';
+          // console.log(getComputedStyle(this.DOM.output).width);
+        },
+      };
+
+      App.init();
+
+      // var xpath =
+      //   "//button[contains(normalize-space(),'button')]|//*[@role='button'][contains(normalize-space(),'button')]";
+
+      // // Evaluate the XPath expression against the current document
+      // var result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+
+      // let node;
+
+      // while ((node = result.iterateNext())) {
+      //   console.log('Matched node:', node.tagName, node.nodeType, node.textContent.trim());
+      // }
+
+      const req = new XMLHttpRequest();
+
+      req.open('POST', 'https://jsonplaceholder.typicode.com/todosssss');
+
+      req.send(JSON.stringify({ title: 'foo', body: 'bar', userId: 1 }));
+
+      const { describe, test, beforeAll, beforeEach, expect, screen, user, page, navigation, request } = e2e;
+
+      describe('Form', () => {
+        let firstname;
+        let lastname;
+        let button;
+        let output;
+
+        beforeAll(async () => {
+          firstname = await screen.getByLabel('Firstname');
+          lastname = await screen.getByLabel('Lastname');
+          button = await screen.getByRole('button', { name: 'Click' });
+          output = await screen.getByTestId('output');
+        });
+
+        beforeEach(() => {
+          firstname.value = '';
+          lastname.value = '';
+        });
+
+        test('Welecome message should be on screen', async () => {
+          await user.type(firstname, 'Jaap');
+          await user.type(lastname, 'Wieltjes');
+
+          await user.click(button);
+
+          await expect(await screen.getByText('Hello, Jaap Wieltjes!')).toBeDefined();
+
+          await page.location('/', { timeout: 2000 });
+        });
+
+        test('foo', async () => {
+          await expect(output).toBeVisible();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -6,10 +6,10 @@ export async function fetchInterceptor(originalFetch, ...args) {
     requestSubject.next({
         type: 'fetch',
         method,
-        url: typeof url === 'string' ? new URL(url) : url,
+        url: typeof url === 'string' ? new URL(url) : url instanceof URL ? url : new URL(url.url),
         body,
         response,
-        status: response.status
+        status: response.status,
     });
     return response;
 }
