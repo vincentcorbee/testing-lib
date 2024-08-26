@@ -1,10 +1,11 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
+const ignoreTags = '[not(self::body or self::style or self::script)]';
 export function getByText(text, options = {}) {
-    const { parent = '*', index = 0, container = document, timeout = 1000, } = typeof options === 'string' ? { parent: options } : options || {};
-    return waitFor(async (resolve) => {
-        const xpath = `//${parent}[not(self::script)][contains(normalize-space(text()),'${text}')]`;
+    const { parent = '*', index = 0, container = document, timeout = 1000, exact = true, } = typeof options === 'string' ? { parent: options } : options || {};
+    return waitForWithResolvers(async (resolve) => {
+        const xpath = `//${parent}${ignoreTags}[${exact ? `normalize-space()='${text}' or normalize-space(text())='${text}'` : `contains(normalize-space(),'${text}') or contains(normalize-space(text()),'${text}')`}]`;
         const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let element;
         let i = 0;

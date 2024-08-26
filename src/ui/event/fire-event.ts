@@ -1,9 +1,9 @@
-import { waitFor } from '../../shared/wait-for.js';
+import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
 import { getBySelector } from '../queries/get/get-by-selector.js';
 import { verifyElementInDOM } from '../utils.js';
 
 export function fireEvent(selectorOrElement: string | Element, eventType: string, payload: any = {}) {
-  return waitFor(async (resolve, reject) => {
+  return waitForWithResolvers(async (resolve, reject) => {
     const element = typeof selectorOrElement === 'string' ? await getBySelector(selectorOrElement) : selectorOrElement;
 
     let event: Event | MouseEvent | FocusEvent | KeyboardEvent | undefined;

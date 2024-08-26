@@ -1,5 +1,5 @@
 import { AssertionError } from '../../core/assertions/assertion.error.js';
-import { waitFor } from '../../shared/wait-for.js';
+import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
 
 export type Location = {
   href: string;
@@ -31,7 +31,7 @@ export function location(
 ): Promise<void> {
   options = arguments[arguments.length - 1] as { timeout?: number };
 
-  return waitFor<void>(async (resolve) => {
+  return waitForWithResolvers<void>(async (resolve) => {
     const { hash, host, hostname, href, origin, pathname, port, protocol, search } = window.location;
 
     let actual: string;

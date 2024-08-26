@@ -1,4 +1,4 @@
-import { waitFor } from '../../shared/wait-for.js';
+import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
 import { fireEvent } from '../event/fire-event.js';
 import { getCode } from '../get-code.js';
 import { getBySelector } from '../queries/get/get-by-selector.js';
@@ -10,7 +10,7 @@ export function type(
 ) {
   const { min = 50, max = 130 } = options;
 
-  return waitFor(async (resolve, reject) => {
+  return waitForWithResolvers(async (resolve, reject) => {
     const element =
       typeof selectorOrElement === 'string'
         ? await getBySelector<HTMLInputElement>(selectorOrElement)

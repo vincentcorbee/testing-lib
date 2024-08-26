@@ -1,28 +1,5 @@
+import { isElementVisble } from '../../shared/index.js';
 import { AssertionError } from './assertion.error.js';
-function isVisble(element) {
-    let target = element;
-    while (target) {
-        const { display } = getComputedStyle(target);
-        if (!document.contains(target) || display === 'none')
-            return false;
-        const { width, height } = target.getBoundingClientRect();
-        if (height === 0 || width === 0) {
-            const { parentElement } = target;
-            if (parentElement) {
-                const { overflow, overflowX, overflowY } = getComputedStyle(parentElement);
-                if (overflow === 'hidden')
-                    return false;
-                if (width !== 0 && overflowX === 'hidden')
-                    return false;
-                if (height !== 0 && overflowY === 'hidden')
-                    return false;
-                target = parentElement;
-            }
-        }
-        break;
-    }
-    return true;
-}
 function toEqual(actual, expected, parent) {
     switch (parent.name) {
         case 'not':
@@ -126,7 +103,7 @@ function not(actual, parent) {
     };
 }
 function toBeVisible(actual, parent) {
-    const visible = isVisble(actual);
+    const visible = isElementVisble(actual);
     switch (parent.name) {
         case 'not':
             if (visible) {
@@ -153,7 +130,7 @@ function toBeVisible(actual, parent) {
                 });
             }
     }
-    if (!isVisble(actual)) {
+    if (!isElementVisble(actual)) {
         throw new AssertionError({
             name: 'toBeVisible',
             expected: 'visible',

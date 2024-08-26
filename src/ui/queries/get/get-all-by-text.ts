@@ -1,24 +1,22 @@
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
+
+const ignoreTags = '[not(self::body or self::style or self::script)]';
 
 export function getAllByText<E extends Element = Element>(
   text: string,
-  options: string | { parent?: string; container?: Node; timeout?: number } = {},
+  options: string | { parent?: string; container?: Node; timeout?: number; exact?: boolean } = {},
 ) {
   const {
     parent = '*',
     container = document,
     timeout = 1000,
+    exact = true,
   } = typeof options === 'string' ? { parent: options } : options || {};
 
-  return waitFor<E[]>(
+  return waitForWithResolvers<E[]>(
     (resolve) => {
-      const result = document.evaluate(
-        `//${parent}[contains(normalize-space(),'${text}')]`,
-        container,
-        null,
-        XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-        null,
-      );
+      const xpath = `//${parent}${ignoreTags}[${exact ? `normalize-space()='${text}' or normalize-space(text())='${text}'` : `contains(normalize-space(),'${text}') or contains(normalize-space(text()),'${text}')`}]`;
+      const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
       const elements: E[] = [];
 

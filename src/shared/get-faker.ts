@@ -1,5 +1,5 @@
 import { env } from './env.js';
-import { waitFor } from './wait-for.js';
+import { waitForWithResolvers } from './wait-for-with-resolvers.js';
 
 export function getFaker() {
   if (env === 'node') {
@@ -19,7 +19,7 @@ export function getFaker() {
     }
   }
 
-  return waitFor((resolve) => {
+  return waitForWithResolvers((resolve) => {
     if (globalThis.faker) resolve(globalThis.faker);
     else throw Error('Faker not found');
   });

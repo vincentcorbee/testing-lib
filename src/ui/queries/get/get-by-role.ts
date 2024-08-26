@@ -1,40 +1,78 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
-type Role = 'button' | 'heading';
+export type GetByRoleOptions = {
+  container?: Node;
+  index?: number;
+  timeout?: number;
+  name?: string;
+  exact?: boolean;
+  label?: string;
+  disabled?: boolean;
+  level?: number;
+};
 
-const ignoreScriptTag = '[not(self::script)]';
+export type Role = 'button' | 'heading' | 'checkbox' | 'radio';
+
+type CreateXpathOptions = Omit<GetByRoleOptions, 'timeout' | 'container'> & {
+  role: Role;
+};
+
+const ignoreTags = '[not(self::style or self::script)]';
 const headings = '//h1|//h2|//h3|//h4|//h5|//h6';
 
-function createXpath(role: Role, name?: string) {
+function getHeading(level?: number) {
+  if (level === undefined) return headings;
+
+  return `//h${level}`;
+}
+
+function createXpath(options: CreateXpathOptions) {
+  const { role, name, exact = true, label, disabled = false, level } = options;
   let xpath = '';
 
   switch (role) {
+    case 'radio':
+    case 'checkbox':
     case 'button':
-      xpath = `(//${role}|//*${ignoreScriptTag}[@role='${role}'])`;
+      xpath = `(//${role}|//body//*${ignoreTags}[@role='${role}'])`;
       break;
     case 'heading':
-      xpath = `(${headings}|//*${ignoreScriptTag}[@role='${role}'])`;
+      xpath = `(${getHeading(level)}|//body//*${ignoreTags}[@role='${role}'])`;
       break;
     default:
-      xpath = `//*${ignoreScriptTag}[@role='${role}']`;
+      xpath = `//body//*${ignoreTags}[@role='${role}']`;
   }
 
-  if (name) xpath += `[contains(normalize-space(.),'${name}')]`;
+  if (name)
+    xpath += `[${exact ? `normalize-space()='${name}' or normalize-space(text())='${name}'` : `contains(normalize-space(),'${name}') or contains(normalize-space(text()),'${name}')`}]`;
+
+  if (label) xpath += `[@aria-label='${label}']`;
+
+  if (disabled) xpath += `[@disabled]`;
 
   return xpath;
 }
 
 export function getByRole<E extends Element>(
   role: Role,
-  options: { container?: Node; index?: number; timeout?: number; name?: string } = {},
+  options: {
+    container?: Node;
+    index?: number;
+    timeout?: number;
+    name?: string;
+    exact?: boolean;
+    label?: string;
+    disabled?: boolean;
+    level?: number;
+  } = {},
 ) {
-  const { index = 0, container = document, timeout = 1000 } = options || {};
+  const { index = 0, container = document, timeout = 1000, ...rest } = options || {};
 
-  return waitFor<E>(
+  return waitForWithResolvers<E>(
     async (resolve) => {
-      const xpath = createXpath(role, options.name);
+      const xpath = createXpath({ role, ...rest });
       const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
       let element: Node | null;

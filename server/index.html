@@ -54,12 +54,25 @@
       }
     </script>
 
-    <script type="module">
+    <!-- <script type="module">
       import * as e2e from 'e2e';
 
       window.e2e = e2e;
-    </script>
+    </script> -->
     <script type="module">
+      import {
+        describe,
+        test,
+        beforeAll,
+        beforeEach,
+        expect,
+        screen,
+        user,
+        page,
+        navigation,
+        request,
+        waitFor,
+      } from 'e2e';
       const App = {
         data: {
           firstname: '',
@@ -108,25 +121,11 @@
 
       App.init();
 
-      // var xpath =
-      //   "//button[contains(normalize-space(),'button')]|//*[@role='button'][contains(normalize-space(),'button')]";
-
-      // // Evaluate the XPath expression against the current document
-      // var result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-
-      // let node;
-
-      // while ((node = result.iterateNext())) {
-      //   console.log('Matched node:', node.tagName, node.nodeType, node.textContent.trim());
-      // }
-
       const req = new XMLHttpRequest();
 
       req.open('POST', 'https://jsonplaceholder.typicode.com/todosssss');
 
       req.send(JSON.stringify({ title: 'foo', body: 'bar', userId: 1 }));
-
-      const { describe, test, beforeAll, beforeEach, expect, screen, user, page, navigation, request } = e2e;
 
       describe('Form', () => {
         let firstname;
@@ -139,6 +138,8 @@
           lastname = await screen.getByLabel('Lastname');
           button = await screen.getByRole('button', { name: 'Click' });
           output = await screen.getByTestId('output');
+
+          await screen.getByText('Click');
         });
 
         beforeEach(() => {
@@ -159,6 +160,10 @@
 
         test('foo', async () => {
           await expect(output).toBeVisible();
+
+          await waitFor(() => {
+            return true;
+          });
         });
       });
     </script>

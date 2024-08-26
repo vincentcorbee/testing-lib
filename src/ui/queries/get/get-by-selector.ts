@@ -1,5 +1,5 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
 export function getBySelector<E extends Element = Element>(
@@ -8,7 +8,7 @@ export function getBySelector<E extends Element = Element>(
 ) {
   const { container = document, timeout = 1000 } = options;
 
-  return waitFor(
+  return waitForWithResolvers(
     async (resolve) => {
       const element = container.querySelector(selector);
 

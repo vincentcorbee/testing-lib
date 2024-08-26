@@ -1,3 +1,3 @@
-export declare function waitFor<V = undefined>(action: (resolve: (value?: V) => void, reject: (reason?: any) => void) => void | Promise<void>, options?: {
+export declare function waitFor<V = undefined>(action: () => Promise<V> | V, options?: {
     timeout?: number;
 }): Promise<V | undefined>;

@@ -1,28 +1,40 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
-const ignoreScriptTag = '[not(self::script)]';
+const ignoreTags = '[not(self::style or self::script)]';
 const headings = '//h1|//h2|//h3|//h4|//h5|//h6';
-function createXpath(role, name) {
+function getHeading(level) {
+    if (level === undefined)
+        return headings;
+    return `//h${level}`;
+}
+function createXpath(options) {
+    const { role, name, exact = true, label, disabled = false, level } = options;
     let xpath = '';
     switch (role) {
+        case 'radio':
+        case 'checkbox':
         case 'button':
-            xpath = `(//${role}|//*${ignoreScriptTag}[@role='${role}'])`;
+            xpath = `(//${role}|//body//*${ignoreTags}[@role='${role}'])`;
             break;
         case 'heading':
-            xpath = `(${headings}|//*${ignoreScriptTag}[@role='${role}'])`;
+            xpath = `(${getHeading(level)}|//body//*${ignoreTags}[@role='${role}'])`;
             break;
         default:
-            xpath = `//*${ignoreScriptTag}[@role='${role}']`;
+            xpath = `//body//*${ignoreTags}[@role='${role}']`;
     }
     if (name)
-        xpath += `[contains(normalize-space(.),'${name}')]`;
+        xpath += `[${exact ? `normalize-space()='${name}' or normalize-space(text())='${name}'` : `contains(normalize-space(),'${name}') or contains(normalize-space(text()),'${name}')`}]`;
+    if (label)
+        xpath += `[@aria-label='${label}']`;
+    if (disabled)
+        xpath += `[@disabled]`;
     return xpath;
 }
 export function getByRole(role, options = {}) {
-    const { index = 0, container = document, timeout = 1000 } = options || {};
-    return waitFor(async (resolve) => {
-        const xpath = createXpath(role, options.name);
+    const { index = 0, container = document, timeout = 1000, ...rest } = options || {};
+    return waitForWithResolvers(async (resolve) => {
+        const xpath = createXpath({ role, ...rest });
         const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let element;
         let i = 0;

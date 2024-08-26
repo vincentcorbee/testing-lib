@@ -1,8 +1,8 @@
 import { AssertionError } from '../../core/assertions/assertion.error.js';
-import { waitFor } from '../../shared/wait-for.js';
+import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
 export function location(predicateOrProperty, predicate, options) {
     options = arguments[arguments.length - 1];
-    return waitFor(async (resolve) => {
+    return waitForWithResolvers(async (resolve) => {
         const { hash, host, hostname, href, origin, pathname, port, protocol, search } = window.location;
         let actual;
         let expected;

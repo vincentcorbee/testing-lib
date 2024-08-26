@@ -3,4 +3,5 @@ export declare function getByText<E extends Element>(text: string, options?: str
     container?: Node;
     index?: number;
     timeout?: number;
+    exact?: boolean;
 }): Promise<E>;

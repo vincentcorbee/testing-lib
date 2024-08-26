@@ -1,37 +1,6 @@
+import { isElementVisble } from '../../shared/index.js';
 import { ExpectContext, Matchers } from '../types.js';
 import { AssertionError } from './assertion.error.js';
-
-function isVisble(element: HTMLElement) {
-  let target = element;
-
-  while (target) {
-    const { display } = getComputedStyle(target);
-
-    if (!document.contains(target) || display === 'none') return false;
-
-    const { width, height } = target.getBoundingClientRect();
-
-    if (height === 0 || width === 0) {
-      const { parentElement } = target;
-
-      if (parentElement) {
-        const { overflow, overflowX, overflowY } = getComputedStyle(parentElement);
-
-        if (overflow === 'hidden') return false;
-
-        if (width !== 0 && overflowX === 'hidden') return false;
-
-        if (height !== 0 && overflowY === 'hidden') return false;
-
-        target = parentElement;
-      }
-    }
-
-    break;
-  }
-
-  return true;
-}
 
 function toEqual<T>(actual: T, expected: any, parent: ExpectContext) {
   switch (parent.name) {
@@ -147,7 +116,7 @@ function not<T>(actual: T, parent: ExpectContext) {
 }
 
 function toBeVisible<T extends HTMLElement>(actual: T, parent: ExpectContext) {
-  const visible = isVisble(actual);
+  const visible = isElementVisble(actual);
 
   switch (parent.name) {
     case 'not':
@@ -176,7 +145,7 @@ function toBeVisible<T extends HTMLElement>(actual: T, parent: ExpectContext) {
       }
   }
 
-  if (!isVisble(actual)) {
+  if (!isElementVisble(actual)) {
     throw new AssertionError({
       name: 'toBeVisible',
       expected: 'visible',

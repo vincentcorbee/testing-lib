@@ -1,4 +1,4 @@
-export * from './screen.js';
+export * from './screen/index.js';
 export * as event from './event/index.js';
 export * as request from './request/index.js';
 export * as user from './user/index.js';

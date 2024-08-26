@@ -1,9 +1,9 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitFor } from '../../../shared/index.js';
+import { waitForWithResolvers } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 export function getByXpath(expression, options = {}) {
     const { index = 0, container = document, timeout = 1000 } = options || {};
-    return waitFor(async (resolve) => {
+    return waitForWithResolvers(async (resolve) => {
         const result = document.evaluate(expression, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let element;
         let i = 0;
