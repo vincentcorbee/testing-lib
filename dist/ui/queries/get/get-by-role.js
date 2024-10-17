@@ -1,5 +1,5 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitForWithResolvers } from '../../../shared/index.js';
+import { waitFor } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 const ignoreTags = '[not(self::style or self::script)]';
 const headings = '//h1|//h2|//h3|//h4|//h5|//h6';
@@ -33,7 +33,7 @@ function createXpath(options) {
 }
 export function getByRole(role, options = {}) {
     const { index = 0, container = document, timeout = 1000, ...rest } = options || {};
-    return waitForWithResolvers(async (resolve) => {
+    return waitFor(async () => {
         const xpath = createXpath({ role, ...rest });
         const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         let element;
@@ -46,13 +46,13 @@ export function getByRole(role, options = {}) {
         if (!element)
             throw new AssertionError({
                 name: 'getByText',
-                expected: `Element with role ${role}`,
+                expected: `Element with role ${role}${rest.label ? ` and aria-label ${rest.label}` : ''}${rest.name ? ` and text ${rest.name}` : ''}`,
                 actual: element,
                 pass: false,
                 message: `Element with role ${role} not found`,
             });
         await verifyElementInDOM(element, { query: 'getByRole' });
-        resolve(element);
+        return element;
     }, { timeout });
 }
 //# sourceMappingURL=get-by-role.js.map

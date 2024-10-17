@@ -23,7 +23,11 @@ export const testRunner = new TestRunner();
 testRunner.intercept(globalThis, 'fetch', fetchInterceptor);
 // testRunner.intercept(console, 'log', consoleLogInterceptor)
 
-getFaker().then((faker: any) => (globalThis.faker = faker));
+getFaker().then((faker: any) => {
+  globalThis.faker = faker;
+
+  testRunner.ready();
+});
 
 if (env === 'browser') {
   testRunner.intercept(XMLHttpRequest.prototype, 'open', xmlHttpRequestOpenInterceptor);
@@ -138,5 +142,14 @@ export const runner: Runner = {
   },
   intercept(object, methodName, interceptor) {
     return testRunner.intercept(object, methodName, interceptor);
+  },
+  abort() {
+    testRunner.abort();
+  },
+  onCompleted(fn: (result: string) => void) {
+    testRunner.on('completed', fn);
+  },
+  onStarted(fn: () => void) {
+    testRunner.on('started', fn);
   },
 };

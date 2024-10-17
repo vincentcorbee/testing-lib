@@ -1,15 +1,15 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitForWithResolvers } from '../../../shared/index.js';
+import { waitFor } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
 export function getBySelector<E extends Element = Element>(
   selector: string,
   options: { container?: Document | HTMLElement; timeout?: number } = {},
-) {
+): Promise<E> {
   const { container = document, timeout = 1000 } = options;
 
-  return waitForWithResolvers(
-    async (resolve) => {
+  return waitFor<E>(
+    async () => {
       const element = container.querySelector(selector);
 
       if (!element)
@@ -23,8 +23,8 @@ export function getBySelector<E extends Element = Element>(
 
       await verifyElementInDOM(element, { query: 'getBySelector', selector });
 
-      resolve(element as E);
+      return element as E;
     },
     { timeout },
-  ) as Promise<E>;
+  );
 }

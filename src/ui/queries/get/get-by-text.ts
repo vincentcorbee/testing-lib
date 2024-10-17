@@ -1,5 +1,5 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitForWithResolvers } from '../../../shared/index.js';
+import { waitFor } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
 const ignoreTags = '[not(self::body or self::style or self::script)]';
@@ -16,8 +16,8 @@ export function getByText<E extends Element>(
     exact = true,
   } = typeof options === 'string' ? { parent: options } : options || {};
 
-  return waitForWithResolvers<E>(
-    async (resolve) => {
+  return waitFor<E>(
+    async () => {
       const xpath = `//${parent}${ignoreTags}[${exact ? `normalize-space()='${text}' or normalize-space(text())='${text}'` : `contains(normalize-space(),'${text}') or contains(normalize-space(text()),'${text}')`}]`;
       const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
@@ -42,7 +42,7 @@ export function getByText<E extends Element>(
 
       await verifyElementInDOM(element, { query: 'getByText' });
 
-      resolve(element as E);
+      return element as E;
     },
     { timeout },
   ) as Promise<E>;

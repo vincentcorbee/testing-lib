@@ -7,7 +7,9 @@ export function location(predicateOrProperty, predicate, options) {
         let actual;
         let expected;
         if (typeof predicateOrProperty === 'function') {
-            await predicateOrProperty({ hash, host, hostname, href, origin, pathname, port, protocol, search });
+            const result = predicateOrProperty({ hash, host, hostname, href, origin, pathname, port, protocol, search });
+            if (result instanceof Promise)
+                await result;
         }
         else {
             if (typeof predicate !== 'object' && predicate !== undefined && typeof predicateOrProperty === 'string') {

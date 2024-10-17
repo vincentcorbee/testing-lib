@@ -7,7 +7,10 @@ import { getFaker } from '../shared/get-faker.js';
 export const testRunner = new TestRunner();
 testRunner.intercept(globalThis, 'fetch', fetchInterceptor);
 // testRunner.intercept(console, 'log', consoleLogInterceptor)
-getFaker().then((faker) => (globalThis.faker = faker));
+getFaker().then((faker) => {
+    globalThis.faker = faker;
+    testRunner.ready();
+});
 if (env === 'browser') {
     testRunner.intercept(XMLHttpRequest.prototype, 'open', xmlHttpRequestOpenInterceptor);
     testRunner.intercept(XMLHttpRequest.prototype, 'send', xmlHttpRequestSendInterceptor);
@@ -107,6 +110,15 @@ export const runner = {
     },
     intercept(object, methodName, interceptor) {
         return testRunner.intercept(object, methodName, interceptor);
+    },
+    abort() {
+        testRunner.abort();
+    },
+    onCompleted(fn) {
+        testRunner.on('completed', fn);
+    },
+    onStarted(fn) {
+        testRunner.on('started', fn);
     },
 };
 //# sourceMappingURL=globals.js.map

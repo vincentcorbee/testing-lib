@@ -1,5 +1,5 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitForWithResolvers } from '../../../shared/index.js';
+import { waitFor } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
 export type GetByRoleOptions = {
@@ -70,8 +70,8 @@ export function getByRole<E extends Element>(
 ) {
   const { index = 0, container = document, timeout = 1000, ...rest } = options || {};
 
-  return waitForWithResolvers<E>(
-    async (resolve) => {
+  return waitFor<E>(
+    async () => {
       const xpath = createXpath({ role, ...rest });
       const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
@@ -88,7 +88,7 @@ export function getByRole<E extends Element>(
       if (!element)
         throw new AssertionError({
           name: 'getByText',
-          expected: `Element with role ${role}`,
+          expected: `Element with role ${role}${rest.label ? ` and aria-label ${rest.label}` : ''}${rest.name ? ` and text ${rest.name}` : ''}`,
           actual: element,
           pass: false,
           message: `Element with role ${role} not found`,
@@ -96,8 +96,8 @@ export function getByRole<E extends Element>(
 
       await verifyElementInDOM(element, { query: 'getByRole' });
 
-      resolve(element as E);
+      return element as E;
     },
     { timeout },
-  ) as Promise<E>;
+  );
 }

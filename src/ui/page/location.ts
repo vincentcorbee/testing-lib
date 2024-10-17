@@ -38,7 +38,9 @@ export function location(
     let expected: string | RegExp;
 
     if (typeof predicateOrProperty === 'function') {
-      await predicateOrProperty({ hash, host, hostname, href, origin, pathname, port, protocol, search });
+      const result = predicateOrProperty({ hash, host, hostname, href, origin, pathname, port, protocol, search });
+
+      if (result instanceof Promise) await result;
     } else {
       if (typeof predicate !== 'object' && predicate !== undefined && typeof predicateOrProperty === 'string') {
         actual = window.location[predicateOrProperty];

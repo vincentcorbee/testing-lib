@@ -1,5 +1,5 @@
 import { AssertionError } from '../../../core/assertions/index.js';
-import { waitForWithResolvers } from '../../../shared/index.js';
+import { waitFor } from '../../../shared/index.js';
 import { verifyElementInDOM } from '../../utils.js';
 
 export function getByXpath<E extends Element>(
@@ -8,8 +8,8 @@ export function getByXpath<E extends Element>(
 ) {
   const { index = 0, container = document, timeout = 1000 } = options || {};
 
-  return waitForWithResolvers<E>(
-    async (resolve) => {
+  return waitFor<E>(
+    async () => {
       const result = document.evaluate(expression, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
       let element: Node | null;
@@ -33,8 +33,8 @@ export function getByXpath<E extends Element>(
 
       await verifyElementInDOM(element, { query: 'getByExpression' });
 
-      resolve(element as E);
+      return element as E;
     },
     { timeout },
-  ) as Promise<E>;
+  );
 }

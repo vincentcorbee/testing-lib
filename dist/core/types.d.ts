@@ -50,6 +50,9 @@ export type Runner = {
     clearAllMock(): void;
     resetAllMock(): void;
     restoreAllMock(): void;
+    abort(): void;
+    onCompleted(fn: (result: string) => void): void;
+    onStarted(fn: () => void): void;
 };
 export type MatcherResultInterface = {
     name?: string;

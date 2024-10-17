@@ -4,6 +4,9 @@ export declare class TestRunner {
     root: DescribeBlock;
     currentDescribeBlock: DescribeBlock;
     constructor();
+    on(event: 'completed' | 'started', listener: (result: string) => void): void;
+    ready(): void;
+    abort(): void;
     get started(): boolean;
     test(name: string, fn: TestCallback, skip?: boolean, only?: boolean): Promise<void>;
     describe(name: string, fn: DescribeCallback, skip?: boolean, only?: boolean): Promise<void>;

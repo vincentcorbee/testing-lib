@@ -1,3 +1,4 @@
+import { waitFor } from '../shared/wait-for.js';
 import { AssertionError } from './assertions/index.js';
 import { MockFunctionFactory } from './mock-function-factory.js';
 import { TestRun } from './test-run.js';
@@ -66,6 +67,9 @@ export class TestRunner {
   #shouldSkip: boolean;
   #hasOnly: boolean;
   #testRun: TestRun;
+  #isReady: boolean;
+  #aborted: boolean;
+  #listeners: Map<'completed' | 'started', Array<(payload?: any) => void>>;
 
   #mockFunctions: MockFunction[];
 
@@ -108,6 +112,9 @@ export class TestRunner {
     this.#hasOnly = false;
     this.#testRun = new TestRun();
     this.#mockFunctions = [];
+    this.#isReady = false;
+    this.#aborted = false;
+    this.#listeners = new Map();
   }
 
   #reset() {
@@ -117,9 +124,12 @@ export class TestRunner {
     this.#hasOnly = false;
     this.#testRun = new TestRun();
     this.#mockFunctions = [];
+    this.#aborted = false;
+    this.#listeners = new Map();
   }
 
   #shouldRunTest({ only = false, skip = false }: TestBlock) {
+    if (this.#aborted) return false;
     if (this.#shouldSkip) return false;
 
     if (skip) return false;
@@ -130,6 +140,12 @@ export class TestRunner {
   }
 
   async #startTestRun() {
+    await waitFor(() => {
+      if (!this.#isReady) throw Error('Test runner is not ready');
+    });
+
+    this.#listeners.get('started')?.forEach((listener) => listener());
+
     this.#testRun.start();
 
     this.#testRun.addToReport(await this.#executeDescribe(this.root, 0));
@@ -272,6 +288,22 @@ export class TestRunner {
     return report + testReport + describeReport;
   }
 
+  on(event: 'completed' | 'started', listener: (result: string) => void) {
+    const listeners = this.#listeners.get(event) ?? [];
+
+    listeners.push(listener);
+
+    this.#listeners.set(event, listeners);
+  }
+
+  ready() {
+    this.#isReady = true;
+  }
+
+  abort() {
+    this.#aborted = true;
+  }
+
   get started() {
     return this.#testRun.started;
   }
@@ -330,9 +362,10 @@ export class TestRunner {
     */
     if (describeBlocks.length === 0) {
       root.blocks[index] = describeBlock;
-      // root.blocks.push(describeBlock);
 
       await this.#startTestRun();
+
+      this.#listeners.get('completed')?.forEach((listener) => listener(this.#testRun.report));
 
       console.log(this.#testRun.report);
 

@@ -2,6 +2,10 @@ import http from 'node:http';
 import path from 'node:path';
 import { createReadStream } from 'node:fs';
 
+function removeTimestamp(url: string) {
+  return url.replace(/\?t=\d+/, '');
+}
+
 const server = http.createServer((req, res) => {
   const { url } = req;
 
@@ -24,6 +28,12 @@ const server = http.createServer((req, res) => {
       res.setHeader('Content-Type', 'application/javascript');
 
       createReadStream(path.join(process.cwd(), `${url}`)).pipe(res);
+    } else if (url?.startsWith('/test')) {
+      res.statusCode = 200;
+
+      res.setHeader('Content-Type', 'application/javascript');
+
+      createReadStream(path.join(process.cwd(), `${removeTimestamp(url)}`)).pipe(res);
     } else {
       res.statusCode = 200;
 
