@@ -4,7 +4,9 @@ export declare class TestRunner {
     root: DescribeBlock;
     currentDescribeBlock: DescribeBlock;
     constructor();
-    on(event: 'completed' | 'started', listener: (result: string) => void): void;
+    on(event: 'completed' | 'started', listener: (result: string) => void): this;
+    off(event: 'completed' | 'started', listener: (result: string) => void): this;
+    removeAllListeners(): this;
     ready(): void;
     abort(): void;
     get started(): boolean;

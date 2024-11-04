@@ -13,7 +13,7 @@ export type GetByRoleOptions = {
   level?: number;
 };
 
-export type Role = 'button' | 'heading' | 'checkbox' | 'radio';
+export type Role = 'button' | 'heading' | 'checkbox' | 'radio' | 'link';
 
 type CreateXpathOptions = Omit<GetByRoleOptions, 'timeout' | 'container'> & {
   role: Role;
@@ -37,6 +37,9 @@ function createXpath(options: CreateXpathOptions) {
     case 'checkbox':
     case 'button':
       xpath = `(//${role}|//body//*${ignoreTags}[@role='${role}'])`;
+      break;
+    case 'link':
+      xpath = `(//a|//body//*${ignoreTags}[@role='${role}'])`;
       break;
     case 'heading':
       xpath = `(${getHeading(level)}|//body//*${ignoreTags}[@role='${role}'])`;

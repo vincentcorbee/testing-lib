@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, beforeEach, runner, request } from './dist/index.js';
+import { describe, test, expect, beforeAll, beforeEach, runner, request } from '../dist/index.js';
 
 const fn = runner.mockFunction((a, b) => a + b);
 

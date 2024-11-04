@@ -29,9 +29,10 @@ export declare const screen: {
         container?: Node;
         timeout?: number;
     }): Promise<HTMLInputElement>;
-    getByTestId<E extends Element>(id: string, options: {
+    getByTestId<E extends Element>(id: string, options?: {
         container?: Document | HTMLElement;
         timeout?: number;
+        testIdAttribute?: string;
     }): Promise<E>;
     getByRole<E extends Element>(role: queries.Role, options?: {
         container?: Node;

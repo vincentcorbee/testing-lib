@@ -1,0 +1,8 @@
+{
+  "membership-registration": {
+    "author-as-owner": "scenarios/membership-registration/author-as-owner.spec.js"
+  },
+  "residency-information": {
+    "happy-flow": "scenarios/residency-information/happy-flow.spec.js"
+  }
+}

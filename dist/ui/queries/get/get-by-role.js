@@ -17,6 +17,9 @@ function createXpath(options) {
         case 'button':
             xpath = `(//${role}|//body//*${ignoreTags}[@role='${role}'])`;
             break;
+        case 'link':
+            xpath = `(//a|//body//*${ignoreTags}[@role='${role}'])`;
+            break;
         case 'heading':
             xpath = `(${getHeading(level)}|//body//*${ignoreTags}[@role='${role}'])`;
             break;

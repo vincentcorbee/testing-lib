@@ -8,7 +8,7 @@ export type GetByRoleOptions = {
     disabled?: boolean;
     level?: number;
 };
-export type Role = 'button' | 'heading' | 'checkbox' | 'radio';
+export type Role = 'button' | 'heading' | 'checkbox' | 'radio' | 'link';
 export declare function getByRole<E extends Element>(role: Role, options?: {
     container?: Node;
     index?: number;

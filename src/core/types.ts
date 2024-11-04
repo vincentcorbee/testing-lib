@@ -63,6 +63,8 @@ export type Runner = {
   abort(): void;
   onCompleted(fn: (result: string) => void): void;
   onStarted(fn: () => void): void;
+  off(event: 'completed' | 'started', fn: (result?: string) => void): void;
+  removeAllListeners(): void;
 };
 
 export type MatcherResultInterface = {

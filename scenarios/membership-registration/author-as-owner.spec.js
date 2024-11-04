@@ -11,9 +11,11 @@ import {
   runner,
   waitFor,
   page,
-} from 'http://localhost:8000/index.js';
+} from '../../dist/index.js';
 
-import { GraphQL } from './graphql.js';
+import { GraphQL } from '../graphql.js';
+import { env } from '../env.js';
+import { padNumber } from '../pad-number.js';
 
 globalThis.runner = runner;
 
@@ -22,10 +24,6 @@ const graphQL = new GraphQL({
   ssoAccessToken: env.users.non_member.sso_access_token,
   ssoAccessTokenBackstage: env.users.backstage.sso_access_token,
 });
-
-function padNumber(number) {
-  return number < 10 ? `0${number}` : number.toString();
-}
 
 async function clickStartRegistrationAsAuthorCard() {
   await user.click('#authorCard');
@@ -435,7 +433,7 @@ describe('Membership registration', () => {
 
         const result = await graphQL.blockIdentificationByIdentificationDocument(registration.identification.id);
 
-        await expect(result.data).toBeDefined();
+        expect(result.data).toBeDefined();
       });
 
       test('should see identification blocked', async () => {
@@ -538,62 +536,6 @@ describe('Membership registration', () => {
     });
   });
 
-  describe('Betalen', () => {
-    test('should go to Betaling', async () => {
-      await clickButton('Invullen');
-      await page.location(/\/payment$/);
-    });
-
-    test('should open Betaalgevens card', async () => {
-      await user.click(await screen.getByRole('heading', { name: 'Betaalgegevens', level: 2 }));
-      await screen.isVisible(await screen.getByText('Betaalstatus'));
-      await screen.isVisible(await screen.getByText('Betaalmethode'));
-    });
-
-    test('should go to Betaal gegevens', async () => {
-      await user.click(await screen.getByText('Invullen', 'button'));
-      await page.location(/\/payment\/form$/);
-      await screen.getByText('Betaling lidmaatschap');
-    });
-
-    test('should go to Overboeking screen', async () => {
-      await user.click(await screen.getByText('Overboeking', 'button'));
-      await screen.getByText('NL41ABNA0433014806');
-    });
-
-    test('should open Bevestig keuze modal and confirm choice', async () => {
-      await user.click(await screen.getByText('Ga verder', 'button'));
-      await screen.getByText('Bevestig keuze');
-      await user.click(await screen.getByText('Ga verder', { index: 1 }));
-      await page.location(/\/overview$/);
-      await waitForPageload();
-
-      const { data } = await graphQL.membershipActiveRegistrations();
-      const [registration] = data.membershipActiveRegistrations;
-
-      const result = await graphQL.approveTransferPayment(registration.payment.id);
-
-      await expect(result.data).toBeDefined();
-    });
-
-    test('Should have Ondertekenen button enabled', async () => {
-      navigation.reload('/membership-registration');
-
-      await screen.getByText('Ondertekenen');
-    });
-
-    test('should see Betaling details', async () => {
-      await screen.getByRole('button', { name: 'Afgerond', index: 3 });
-      await user.click(await screen.getByText('Betaling'));
-      await screen.getByText('Betaald');
-      await screen.getByText('Overboeking');
-
-      const date = new Date();
-
-      await screen.getByText(`${padNumber(date.getDate())}/${padNumber(date.getMonth() + 1)}/${date.getFullYear()}`);
-    });
-  });
-
   describe('Contract ondertekenen', () => {
     test('should not be started', async () => {
       await user.click(await screen.getByText('Contract ondertekenen'));
@@ -624,6 +566,14 @@ describe('Membership registration', () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/sign-contract$/);
       await screen.getByRole('button', { name: 'Ondertekenen', disabled: true });
+    });
+
+    test('should show registration cancel button', async () => {
+      await user.click(await screen.getByRole('button', { name: 'Terug' }));
+      await waitForPageload();
+      await screen.getByRole('button', { name: 'Registratie annuleren' });
+      await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
+      await page.location(/sign-contract$/);
     });
 
     test('should sign contract Stemra', async () => {

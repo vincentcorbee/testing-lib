@@ -152,4 +152,10 @@ export const runner: Runner = {
   onStarted(fn: () => void) {
     testRunner.on('started', fn);
   },
+  off(event: 'completed' | 'started', fn: (result?: string) => void) {
+    testRunner.off(event, fn);
+  },
+  removeAllListeners() {
+    testRunner.removeAllListeners();
+  },
 };

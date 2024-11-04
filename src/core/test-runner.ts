@@ -125,7 +125,6 @@ export class TestRunner {
     this.#testRun = new TestRun();
     this.#mockFunctions = [];
     this.#aborted = false;
-    this.#listeners = new Map();
   }
 
   #shouldRunTest({ only = false, skip = false }: TestBlock) {
@@ -289,11 +288,33 @@ export class TestRunner {
   }
 
   on(event: 'completed' | 'started', listener: (result: string) => void) {
-    const listeners = this.#listeners.get(event) ?? [];
+    const listeners = this.#listeners.get(event);
 
-    listeners.push(listener);
+    if (listeners === undefined) {
+      this.#listeners.set(event, [listener]);
+    } else if (listeners.every((fn) => fn !== listener)) {
+      listeners.push(listener);
+    }
 
-    this.#listeners.set(event, listeners);
+    return this;
+  }
+
+  off(event: 'completed' | 'started', listener: (result: string) => void) {
+    const listeners = this.#listeners.get(event);
+
+    if (listeners)
+      this.#listeners.set(
+        event,
+        listeners.filter((fn) => fn !== listener),
+      );
+
+    return this;
+  }
+
+  removeAllListeners() {
+    this.#listeners.clear();
+
+    return this;
   }
 
   ready() {

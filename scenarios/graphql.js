@@ -81,9 +81,6 @@ export class GraphQL {
           identification(role: "prospective_member") {
             id
           }
-          payment {
-            id
-          }
         }
       }
     }`;
@@ -109,15 +106,5 @@ export class GraphQL {
     }`;
 
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
-  }
-
-  async approveTransferPayment(paymentId) {
-    const query = `mutation($input: ApproveTransferPaymentInputType!) {
-      approveTransferPayment(input: $input) {
-        id
-      }
-    }`;
-
-    return this.#performGraphQLQuery(query, { input: { id: paymentId } }, this.#ssoAccessTokenBackstage);
   }
 }

@@ -1,4 +1,4 @@
-import { describe, test, beforeAll, beforeEach, afterAll, afterEach } from './dist/index.js';
+import { describe, test, beforeAll, beforeEach, afterAll, afterEach } from '../dist/index.js';
 
 // beforeAll(() => console.log('1 - beforeAll'));
 // afterAll(() => console.log('1 - afterAll'));
