@@ -135,7 +135,7 @@ class FileExplorer extends HTMLElement {
 
       if (typeof val === 'string') {
         const button = createElement('span', { textContent: key });
-        const icon = createElement('span', { className: 'material-symbols-outlined', textContent: 'play_arrow' });
+        const icon = createElement('span', { className: 'material-symbols-outlined', textContent: 'description' });
         const container = createElement('div', { dataset: { type: 'file', name: val } });
 
         append(list, append(item, append(container, icon, button)));

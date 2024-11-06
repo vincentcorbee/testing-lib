@@ -1,10 +1,16 @@
 {
-  "": {
-    "already-member": "tests/already-member.spec.js",
-    "already-started": "tests/already-started.spec.js",
-    "happy-flow": "tests/happy-flow.spec.js",
-    "login-author": "tests/login-author.spec.js",
-    "login-backstage": "tests/login-backstage.spec.js",
-    "login-non-member": "tests/login-non-member.spec.js"
+  "membership-registration": {
+    "author-as-ower": {
+      "happy-flow": "tests/membership-registration/author-as-ower/happy-flow.spec.js"
+    }
+  },
+  "residency-information": {
+    "blaat": "tests/residency-information/blaat.spec.js",
+    "happy-flow": "tests/residency-information/happy-flow.spec.js"
+  },
+  "user": {
+    "login-author": "tests/user/login-author.spec.js",
+    "login-backstage": "tests/user/login-backstage.spec.js",
+    "login-non-member": "tests/user/login-non-member.spec.js"
   }
 }

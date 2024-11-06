@@ -1,4 +1,4 @@
-import { env } from './env.js';
+import { env } from '../env.js';
 
 export async function loginUser(username) {
   const user = env.users[username];

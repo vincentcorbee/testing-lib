@@ -12,10 +12,10 @@ import {
   waitFor,
   page,
 } from '../../../dist/index.js';
-
-import { GraphQL } from '../../graphql.js';
+import { GraphQL } from '../../api/graphql.js';
 import { env } from '../../env.js';
-import { padNumber } from '../../pad-number.js';
+import { padNumber } from '../../utils/pad-number.js';
+import { loginUser } from '../../utils/login-user.js';
 import {
   clickButton,
   clickStartRegistrationAsAuthorCard,
@@ -30,8 +30,7 @@ import {
   fillInPersonalContactDetails,
   fillPersonalPaymentDetailsBankAccount,
   clickIdentificationSection,
-} from './utils.js';
-import { loginUser } from '../../login-user.js';
+} from './helpers.js';
 
 globalThis.runner = runner;
 

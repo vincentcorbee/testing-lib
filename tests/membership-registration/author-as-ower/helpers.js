@@ -1,5 +1,5 @@
 import { event, expect, user, page, screen, request, waitFor } from '../../../dist/index.js';
-import { padNumber } from '../../pad-number.js';
+import { padNumber } from '../../utils/pad-number.js';
 
 export async function clickStartRegistrationAsAuthorCard() {
   await user.click('#authorCard');

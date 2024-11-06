@@ -1,7 +1,7 @@
 export const css = `
 .material-symbols-outlined {
   font-variation-settings:
-  'FILL' 0,
+  'FILL' 1,
   'wght' 400,
   'GRAD' 0,
   'opsz' 24

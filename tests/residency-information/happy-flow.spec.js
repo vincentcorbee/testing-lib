@@ -1,6 +1,5 @@
 import { beforeAll, describe, test, screen, navigation, user, runner, page } from '../../dist/index.js';
-
-import { padNumber } from '../pad-number.js';
+import { padNumber } from '../utils/pad-number.js';
 
 globalThis.runner = runner;
 
@@ -18,17 +17,23 @@ describe('Residency Information', () => {
   let endDate;
   let endDateBeforeStartDate;
   let minDate;
+  let issuingCountry;
+  let issuingCountryCode;
   let country;
-  let countryCode = 'AF';
+  let countryCode;
+  let fileName;
 
   beforeAll(() => {
     issuingDate = new Date();
     startDate = new Date();
     endDate = new Date();
     endDateBeforeStartDate = new Date();
-    country = 'Afghanistan';
-    countryCode = 'AF';
+    issuingCountry = 'Afghanistan';
+    issuingCountryCode = 'AF';
+    country = 'Nederland';
+    countryCode = 'NL';
     minDate = new Date(1900, 0, 1);
+    fileName = 'my-file.pdf';
 
     minDate.setDate(minDate.getDate() - 1);
     endDate.setDate(startDate.getDate() + 1);
@@ -56,7 +61,7 @@ describe('Residency Information', () => {
   test('it should show required field errors', async () => {
     await user.upload(
       '#residencyInformationDocument-input',
-      new File(['Hello'], 'my-file.pdf', { type: 'application/pdf' }),
+      new File(['Hello'], fileName, { type: 'application/pdf' }),
     );
     await user.click(await screen.getBySelector('#confirmInformation'));
     await user.click(await screen.getByRole('button', { name: 'Opslaan en verder' }));
@@ -101,7 +106,7 @@ describe('Residency Information', () => {
     await screen.getByRole('button', { name: 'Opslaan en verder', disabled: true });
 
     await user.selectOptions(await screen.getByLabel('Land van afgifte'), countryCode);
-    await user.selectOptions(await screen.getByLabel('Land waarvoor verklaring is afgegeven'), countryCode);
+    await user.selectOptions(await screen.getByLabel('Land waarvoor verklaring is afgegeven'), issuingCountryCode);
     await user.type(await screen.getByLabel('Datum van afgifte'), createDateSring(issuingDate));
     await user.type(await screen.getByLabel('Ingangsdatum verklaring'), createDateSring(startDate));
     await user.type(await screen.getByLabel('Einddatum verklaring'), createDateSring(endDate));
@@ -114,10 +119,10 @@ describe('Residency Information', () => {
 
     await user.upload(
       '#residencyInformationDocument-input',
-      new File(['Hello'], 'my-file.pdf', { type: 'application/pdf' }),
+      new File(['Hello'], fileName, { type: 'application/pdf' }),
     );
 
-    await screen.getByText('my-file.pdf');
+    await screen.getByText(fileName);
     await screen.getByRole('button', { name: 'Opslaan en verder', disabled: true });
 
     await user.click(await screen.getBySelector('#confirmInformation'));
@@ -133,5 +138,21 @@ describe('Residency Information', () => {
     await screen.getByText(country);
     await screen.getByText(createDateSring(startDate));
     await screen.getByText(createDateSring(endDate));
+  });
+
+  describe('Residency information view page', () => {
+    test('should see residency information details', async () => {
+      await user.click(await screen.getByTestId('VisibilityOutlinedIcon', { testIdAttribute: 'testid' }));
+
+      await page.location(/residency-information\/view\/.+$/);
+
+      await screen.getByText(country);
+      await screen.getByText(issuingCountry);
+      await screen.getByText(createDateSring(new Date()));
+      await screen.getByText(createDateSring(issuingDate));
+      await screen.getByText(createDateSring(startDate));
+      await screen.getByText(createDateSring(endDate));
+      await screen.getByText(fileName);
+    });
   });
 });

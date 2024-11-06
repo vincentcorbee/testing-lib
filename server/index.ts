@@ -17,13 +17,16 @@ function removeTimestamp(url: string) {
   return url.replace(/\?t=\d+/, '');
 }
 
-async function traverseDir(options: { src: string; filePattern: RegExp }, tests: Record<string, any>) {
-  const { src, filePattern } = options;
+async function traverseDir(
+  options: { basePath: string; src: string; filePattern: RegExp },
+  tests: Record<string, any>,
+) {
+  const { src, filePattern, basePath } = options;
   const entries = await readdir(src, { withFileTypes: true });
 
   for (const entry of entries) {
     if (entry.isFile() && filePattern.test(entry.name)) {
-      const srcPath = path.join(src, entry.name).replace(src, '');
+      const srcPath = path.join(src, entry.name).replace(basePath, '');
 
       const { dir, base } = path.parse(srcPath);
       const dirs = dir.replace(/^\//, '').split('/');
@@ -38,9 +41,8 @@ async function traverseDir(options: { src: string; filePattern: RegExp }, tests:
       });
 
       currentTests[testName] = `tests${srcPath}`;
-    }
-
-    if (entry.isDirectory()) await traverseDir({ src: path.join(src, entry.name), filePattern }, tests);
+    } else if (entry.isDirectory())
+      await traverseDir({ src: path.join(src, entry.name), filePattern, basePath }, tests);
   }
 }
 
@@ -48,7 +50,7 @@ async function getTests(options: { src: string; dest: string; filePattern: RegEx
   const { src, dest, filePattern } = options;
   const tests = {};
 
-  await traverseDir({ src, filePattern }, tests);
+  await traverseDir({ src, filePattern, basePath: src }, tests);
 
   await writeFile(path.join(dest, 'tests.json'), JSON.stringify(tests, null, 2));
 }

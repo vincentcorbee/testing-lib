@@ -9,13 +9,6 @@
   </head>
   <body>
     <h1>UI Testing</h1>
-    <div>
-      <h3>Sign up</h3>
-      <label> <input type="checkbox" /> Subscribe </label>
-      <br />
-      <button>Submit</button>
-      <div role="button">button</div>
-    </div>
     <div class="row">
       <label for="firstname">Firstname</label>
       <input type="text" data-e2e="firstname" name="firstname" id="firstname" />
@@ -27,7 +20,7 @@
     </div>
 
     <div class="row">
-      <input type="email" placeholder="name@example.com" />
+      <input type="email" id="email" placeholder="name@example.com" />
     </div>
 
     <div class="row">
@@ -39,16 +32,10 @@
     </div>
 
     <div class="row">
-      <button type="button" data-e2e="button">
-        <div>></div>
-        Click
-      </button>
+      <button type="button" data-e2e="button">Click</button>
     </div>
     <div>
       <div data-e2e="output"></div>
-    </div>
-    <div>
-      <iframe src="http://localhost:3000" referrerpolicy="origin"></iframe>
     </div>
     <script type="importmap">
       {
@@ -57,12 +44,6 @@
         }
       }
     </script>
-
-    <!-- <script type="module">
-      import * as e2e from 'e2e';
-
-      window.e2e = e2e;
-    </script> -->
     <script type="module">
       import {
         describe,
@@ -82,6 +63,7 @@
           firstname: '',
           lastname: '',
           gender: '',
+          email: '',
         },
         DOM: {
           firstname: document.querySelector('[data-e2e="firstname"]'),
@@ -89,11 +71,11 @@
           output: document.querySelector('[data-e2e="output"]'),
           gender: document.querySelector('[data-e2e="gender"]'),
           button: document.querySelector('[data-e2e="button"]'),
-          iframe: document.querySelector('iframe'),
+          email: document.getElementById('email'),
         },
         addListeners() {
           const {
-            DOM: { firstname, lastname, gender, button, output },
+            DOM: { firstname, lastname, gender, button, output, email },
             data,
           } = this;
 
@@ -110,17 +92,15 @@
           });
 
           button.addEventListener('click', () => {
-            output.innerHTML = `Hello, ${data.firstname} ${data.lastname}!`;
+            output.innerHTML = `Hello, ${data.gender === 'm' ? 'mr' : 'miss'} ${data.firstname} ${data.lastname}! Your email address is: ${data.email}`;
           });
 
-          output.addEventListener('click', () => {
-            console.log('click');
+          email.addEventListener('change', (e) => {
+            data.email = e.target.value;
           });
         },
         init() {
           this.addListeners();
-          // this.DOM.output.style.width = '0%';
-          // console.log(getComputedStyle(this.DOM.output).width);
         },
       };
 
@@ -128,32 +108,25 @@
 
       const req = new XMLHttpRequest();
 
-      req.open('POST', 'https://jsonplaceholder.typicode.com/todosssss');
+      req.open('POST', 'https://jsonplaceholder.typicode.com/todos');
 
       req.send(JSON.stringify({ title: 'foo', body: 'bar', userId: 1 }));
-
-      App.DOM.iframe.addEventListener('load', async () => {
-        window.resizeTo(800, 600);
-        await screen.getByRole('heading', {
-          name: 'Welkom bij MijnBumaStemra',
-          level: 1,
-          container: App.DOM.iframe.contentWindow.document,
-        });
-      });
 
       describe('Form', () => {
         let firstname;
         let lastname;
         let button;
         let output;
+        let gender;
+        let email;
 
         beforeAll(async () => {
           firstname = await screen.getByLabel('Firstname');
           lastname = await screen.getByLabel('Lastname');
           button = await screen.getByRole('button', { name: 'Click' });
           output = await screen.getByTestId('output');
-
-          await screen.getByText('Click');
+          gender = await screen.getByTestId('gender');
+          email = await screen.getByPlaceholder('name@example.com');
         });
 
         beforeEach(() => {
@@ -164,20 +137,16 @@
         test('Welecome message should be on screen', async () => {
           await user.type(firstname, 'Jaap');
           await user.type(lastname, 'Wieltjes');
+          await user.type(email, 'j.wieltjes@gmail.com');
+          await user.selectOptions(gender, 'm');
 
           await user.click(button);
 
-          await expect(await screen.getByText('Hello, Jaap Wieltjes!')).toBeDefined();
+          await expect(
+            await screen.getByText('Hello, mr Jaap Wieltjes! Your email address is: j.wieltjes@gmail.com'),
+          ).toBeDefined();
 
           await page.location('/', { timeout: 2000 });
-        });
-
-        test('foo', async () => {
-          await expect(output).toBeVisible();
-
-          await waitFor(() => {
-            return true;
-          });
         });
       });
     </script>
