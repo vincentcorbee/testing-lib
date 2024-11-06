@@ -5,7 +5,6 @@
     }
   },
   "residency-information": {
-    "blaat": "tests/residency-information/blaat.spec.js",
     "happy-flow": "tests/residency-information/happy-flow.spec.js"
   },
   "user": {
