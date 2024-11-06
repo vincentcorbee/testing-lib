@@ -16,6 +16,5 @@
   "ts-node": {
     "esm": true
   },
-  "include": ["src", "server.ts"],
-  "exclude": ["src/testing-lib.mjs", "src/ui-testing-lib.mjs"]
+  "include": ["src"]
 }

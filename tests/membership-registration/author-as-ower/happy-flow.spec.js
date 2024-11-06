@@ -11,133 +11,29 @@ import {
   runner,
   waitFor,
   page,
-} from '../../dist/index.js';
+} from '../../../dist/index.js';
 
-import { GraphQL } from '../graphql.js';
-import { env } from '../env.js';
-import { padNumber } from '../pad-number.js';
+import { GraphQL } from '../../graphql.js';
+import { env } from '../../env.js';
+import { padNumber } from '../../pad-number.js';
+import {
+  clickButton,
+  clickStartRegistrationAsAuthorCard,
+  createPersonalDetails,
+  createContactDetails,
+  waitForPageload,
+  clickOtherIdentificationCard,
+  startAuthorAsOwnerRegistration,
+  clickPersonalDataSection,
+  clickPersonalDetailsSection,
+  fillInPersonalDetails,
+  fillInPersonalContactDetails,
+  fillPersonalPaymentDetailsBankAccount,
+  clickIdentificationSection,
+} from './utils.js';
+import { loginUser } from '../../login-user.js';
 
 globalThis.runner = runner;
-
-const graphQL = new GraphQL({
-  graphqlEndpoint: env.graphql_endpoint,
-  ssoAccessToken: env.users.non_member.sso_access_token,
-  ssoAccessTokenBackstage: env.users.backstage.sso_access_token,
-});
-
-async function clickStartRegistrationAsAuthorCard() {
-  await user.click('#authorCard');
-  await user.click('#authorCard button:nth-child(1)');
-}
-
-async function clickPersonalDataSection() {
-  await user.click('section:nth-child(1) button');
-}
-
-async function clickPersonalDetailsSection() {
-  await user.click('section:nth-child(2) button');
-}
-
-async function clickIdentificationSection() {
-  await user.click('section:nth-child(2) button');
-}
-
-async function clickOtherIdentificationCard() {
-  await user.click(await screen.getByText('Selecteren', { index: 1 }));
-}
-
-async function fillInPersonalDetails(personalDetails) {
-  await user.type('#firstName', personalDetails.firstName);
-  await user.type('#firstNames', personalDetails.firstNames);
-  await user.type('#lastName', personalDetails.lastName);
-  await user.type('#dateOfBirth', personalDetails.dateOfBirth);
-  await user.selectOptions('#sex', personalDetails.sex);
-  await user.type('#placeOfBirth', personalDetails.placeOfBirth);
-  await user.selectOptions('#countryOfBirth', personalDetails.countryOfBirth);
-  await user.selectOptions('#nationality', personalDetails.nationality);
-}
-
-async function fillInPersonalContactDetails(contactDetails) {
-  await user.type('#zipCode', contactDetails.zipCode);
-  await user.type('#houseNumber', contactDetails.houseNumber);
-  await user.type('input[name=street]', contactDetails.street);
-  await user.type('input[name=city]', contactDetails.city);
-  await user.selectOptions('#country', contactDetails.country);
-  await user.type('input[name=telephoneNumber]', contactDetails.telephoneNumber);
-  await user.type('#email', contactDetails.email);
-}
-
-async function clickButton(name) {
-  await user.click(await screen.getByRole('button', { name }));
-}
-
-function createPersonalDetails() {
-  const birthdate = faker.date.birthdate({ min: 18, max: 65, mode: 'age' });
-  const firstName = faker.person.firstName();
-
-  return {
-    firstName,
-    firstNames: firstName,
-    lastName: faker.person.lastName(),
-    dateOfBirth: `${padNumber(birthdate.getDate())}-${padNumber(birthdate.getMonth() || 1)}-${birthdate.getFullYear()}`,
-    sex: faker.person.sex()[0].toUpperCase(),
-    placeOfBirth: faker.location.city(),
-    countryOfBirth: 'NL',
-    nationality: 'NL',
-  };
-}
-
-function createContactDetails() {
-  return {
-    zipCode: faker.location.zipCode(),
-    houseNumber: faker.location.buildingNumber(),
-    street: faker.location.street(),
-    city: faker.location.city(),
-    country: 'NL',
-    telephoneNumber: '+31 6 12 345 678',
-    email: faker.internet.email(),
-  };
-}
-
-async function waitForPageload() {
-  await screen.getByText('Bezig met laden...');
-
-  await waitFor(async () => await expect(await screen.findByText('Bezig met laden...')).toEqual(null));
-}
-
-async function startAuthorAsOwnerRegistration() {
-  await clickStartRegistrationAsAuthorCard();
-  await expect(
-    request.waitForRequest('/graphql', async (request) => {
-      if (!request.body.includes('startAuthorRegistrationAsOwner')) return false;
-
-      const response = await request.json();
-
-      if (response.errors !== undefined) return false;
-
-      return true;
-    }),
-  ).resolves.toEqual(true);
-
-  await page.location(/overview$/);
-  await screen.getByRole('heading', { name: 'Start je registratie' });
-}
-
-async function fillPersonalPaymentDetailsBankAccount(bankAccountNumber, bankName, bic) {
-  await user.click(await screen.getByText('Ik heb geen IBAN rekeningnummer'));
-
-  const inputBankAccountNumber = await screen.getBySelector('#bankAccountNumber');
-  const inputBankName = await screen.getBySelector('#bankName');
-  const inputBic = await screen.getBySelector('#bic');
-
-  await user.type(inputBankAccountNumber, bankAccountNumber);
-  await user.type(inputBankName, bankName);
-  await user.type(inputBic, bic);
-
-  await event.blur(inputBic);
-
-  await user.upload('#bankStatement-input', new File(['Hello'], 'my-file.pdf', { type: 'application/pdf' }));
-}
 
 describe('Membership registration', () => {
   let personalDetails = {};
@@ -146,15 +42,26 @@ describe('Membership registration', () => {
   let bic;
   let bankName;
   let bankAccountNumber;
+  let graphQL;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     console.clear();
+
     iBAN = 'NL69INGB0123456789';
     bic = 'INGBNL2A';
     bankAccountNumber = '12234';
     bankName = 'Test bank';
     personalDetails = createPersonalDetails();
     contactDetails = createContactDetails();
+
+    await loginUser('backstage');
+    await loginUser('non_member');
+
+    graphQL = new GraphQL({
+      graphqlEndpoint: env.graphql_endpoint,
+      ssoAccessToken: env.users.non_member.sso_access_token,
+      ssoAccessTokenBackstage: env.users.backstage.sso_access_token,
+    });
   });
 
   describe('Registratie starten als auteur', () => {
@@ -164,7 +71,8 @@ describe('Membership registration', () => {
 
     describe('Registratie starten', async () => {
       test('should not be able to start a new registration', async () => {
-        await navigation.navigate('/membership-registration');
+        navigation.navigate('/membership-registration');
+
         await clickStartRegistrationAsAuthorCard();
         await expect(
           request.waitForRequest('/graphql', async (request) => {
@@ -532,7 +440,7 @@ describe('Membership registration', () => {
 
       const world = await screen.getAllByText('Wereld');
 
-      await expect(world.length).toEqual(6);
+      expect(world.length).toEqual(6);
     });
   });
 

@@ -5,7 +5,6 @@ import { xmlHttpRequestOpenInterceptor, xmlHttpRequestSendInterceptor, } from '.
 import { env } from '../shared/env.js';
 import { getFaker } from '../shared/get-faker.js';
 export const testRunner = new TestRunner();
-console.log('loaded');
 testRunner.intercept(globalThis, 'fetch', fetchInterceptor);
 // testRunner.intercept(console, 'log', consoleLogInterceptor)
 getFaker().then((faker) => {

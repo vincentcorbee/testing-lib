@@ -37,6 +37,7 @@
         <option value="f">Female</option>
       </select>
     </div>
+
     <div class="row">
       <button type="button" data-e2e="button">
         <div>></div>
@@ -45,6 +46,9 @@
     </div>
     <div>
       <div data-e2e="output"></div>
+    </div>
+    <div>
+      <iframe src="http://localhost:3000" referrerpolicy="origin"></iframe>
     </div>
     <script type="importmap">
       {
@@ -85,6 +89,7 @@
           output: document.querySelector('[data-e2e="output"]'),
           gender: document.querySelector('[data-e2e="gender"]'),
           button: document.querySelector('[data-e2e="button"]'),
+          iframe: document.querySelector('iframe'),
         },
         addListeners() {
           const {
@@ -126,6 +131,15 @@
       req.open('POST', 'https://jsonplaceholder.typicode.com/todosssss');
 
       req.send(JSON.stringify({ title: 'foo', body: 'bar', userId: 1 }));
+
+      App.DOM.iframe.addEventListener('load', async () => {
+        window.resizeTo(800, 600);
+        await screen.getByRole('heading', {
+          name: 'Welkom bij MijnBumaStemra',
+          level: 1,
+          container: App.DOM.iframe.contentWindow.document,
+        });
+      });
 
       describe('Form', () => {
         let firstname;

@@ -70,10 +70,10 @@ export type Matchers = {
     readonly toBeDefined: (expected: any) => void;
     readonly toBeVisible: () => void;
     readonly resolves: {
-        readonly toEqual: (expected: any) => void;
+        readonly toEqual: (expected: any) => Promise<void>;
     };
     readonly rejects: {
-        readonly toThrow: (expected: any) => void;
+        readonly toThrow: (expected: any) => Promise<void>;
     };
     readonly not: {
         readonly toEqual: (expected: any) => void;

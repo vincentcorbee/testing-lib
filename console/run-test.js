@@ -10,7 +10,7 @@ export function runTest(scenario) {
 
   scriptTag.id = id;
   scriptTag.type = 'module';
-  scriptTag.src = `http://localhost:8000/scenarios/${scenario}.spec.js?t=${new Date().getTime()}`;
+  scriptTag.src = `http://localhost:8000/${scenario}?t=${new Date().getTime()}`;
 
   scriptTag.addEventListener('load', resolve);
 

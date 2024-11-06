@@ -1,49 +1,59 @@
 import http from 'node:http';
 import path from 'node:path';
 import { createReadStream } from 'node:fs';
-import { readdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { readdir, writeFile } from 'node:fs/promises';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const Port = 8000;
+const FilePattern = /\.spec\.js$/i;
+
+const src = path.resolve(__dirname, '../tests');
+const dest = path.resolve(__dirname, '../console');
 
 function removeTimestamp(url: string) {
   return url.replace(/\?t=\d+/, '');
 }
 
-const filePattern = /\.spec\.js$/i;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const scenariosSrc = path.resolve(__dirname, '../scenarios');
-
-const scenarios = {};
-
-async function getScenarios(src: string) {
+async function traverseDir(options: { src: string; filePattern: RegExp }, tests: Record<string, any>) {
+  const { src, filePattern } = options;
   const entries = await readdir(src, { withFileTypes: true });
 
   for (const entry of entries) {
     if (entry.isFile() && filePattern.test(entry.name)) {
-      const srcPath = path.join(src, entry.name).replace(scenariosSrc, '');
+      const srcPath = path.join(src, entry.name).replace(src, '');
 
       const { dir, base } = path.parse(srcPath);
       const dirs = dir.replace(/^\//, '').split('/');
-      const scenarioName = base.replace(filePattern, '');
+      const testName = base.replace(filePattern, '');
 
-      let currentScenarios = scenarios;
+      let currentTests = tests;
 
       dirs.forEach((dir) => {
-        if (!currentScenarios[dir]) currentScenarios[dir] = {};
+        if (!currentTests[dir]) currentTests[dir] = {};
 
-        currentScenarios = scenarios[dir];
+        currentTests = currentTests[dir];
       });
 
-      currentScenarios[scenarioName] = `scenarios${srcPath}`;
+      currentTests[testName] = `tests${srcPath}`;
     }
 
-    if (entry.isDirectory()) await getScenarios(path.join(src, entry.name));
+    if (entry.isDirectory()) await traverseDir({ src: path.join(src, entry.name), filePattern }, tests);
   }
 }
 
-getScenarios(scenariosSrc).then(() => {
-  // writeFile(path.join(scenariosSrc, 'scenarios.json'), JSON.stringify(scenarios, null, 2));
-});
+async function getTests(options: { src: string; dest: string; filePattern: RegExp }) {
+  const { src, dest, filePattern } = options;
+  const tests = {};
+
+  await traverseDir({ src, filePattern }, tests);
+
+  await writeFile(path.join(dest, 'tests.json'), JSON.stringify(tests, null, 2));
+}
+
+getTests({ src, dest, filePattern: FilePattern });
 
 const server = http.createServer((req, res) => {
   const { url = '' } = req;
@@ -62,7 +72,7 @@ const server = http.createServer((req, res) => {
       res.statusCode = 200;
 
       res.end();
-    } else if (/^\/(src|scenarios|dist)\//.test(url)) {
+    } else if (/^\/(src|tests|dist|console)\//.test(url)) {
       res.statusCode = 200;
 
       res.setHeader('Content-Type', 'application/javascript');
@@ -86,6 +96,6 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(8000, () => {
-  console.log('Server is running on port 8000');
+server.listen(Port, () => {
+  console.log(`Server is running on port ${Port}`);
 });
