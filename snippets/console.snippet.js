@@ -1,3 +1,6 @@
+/*
+  This script injects the console script into the current page.
+*/
 const id = 'e2e-testing';
 
 const currentScripTag = document.getElementById(id);

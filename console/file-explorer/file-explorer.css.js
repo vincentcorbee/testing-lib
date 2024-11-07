@@ -8,15 +8,19 @@ export const css = `
 }
 
 :host {
+  --ui-file-explorer-title-size: 14px;
+  --ui-file-explorer-title-weight: 700;
+  --ui-file-explorer-title-padding-left: 16px;
   --ui-file-explorer-folder-label-size: 12px;
   --ui-file-explorer-file-label-size: 12px;
   --ui-file-explorer-list-padding-left: 16px;
   --ui-file-explorer-content-padding: 16px;
   --ui-file-explorer-header-padding: 8px;
-  --ui-file-explorer-shape: 5px;
+  --ui-file-explorer-shape: 0;
   --ui-file-explorer-folder-icon-size: 18px;
   --ui-file-explorer-list-item-padding-top: 4px;
   --ui-file-explorer-list-item-padding-bottom: 4px;
+  --ui-file-explorer-list-item-disabled-opacity: 0.38;
 
   display: block;
   /* position: fixed; */
@@ -41,6 +45,13 @@ export const css = `
   background-color: hsl(300, 3%, 13%);
   padding: var(--ui-file-explorer-header-padding);\
   display: flex;
+  align-items: center;
+}
+
+.ui-file-explorer__header-title {
+  font-size: var(--ui-file-explorer-title-size);
+  font-weight: var(--ui-file-explorer-title-weight);
+  padding-left: var(--ui-file-explorer-title-padding-left);
 }
 
 .ui-file-explorer__content {
@@ -103,5 +114,10 @@ div[data-type="folder"][aria-expanded="false"] + ul {
 div[data-type="file"] > span:nth-child(2) {
   font-size: var(--ui-file-explorer-file-label-size);
   pointer-events: none;
+}
+
+.ui-file-explorer__container:not([data-status="idle"]) div[data-type="file"]:not([data-running="true"]) {
+  pointer-events: none;
+  opacity: var(--ui-file-explorer-list-item-disabled-opacity);
 }
 `;

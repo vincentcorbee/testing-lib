@@ -9,7 +9,8 @@ class FileExplorer extends HTMLElement {
 
   static observedAttributes = ['tests'];
 
-  #started = false;
+  #status = 'idle';
+  #test = '';
 
   attributeChangedCallback(name, _oldValue, newValue) {
     switch (name) {
@@ -29,9 +30,13 @@ class FileExplorer extends HTMLElement {
       const shadowRoot = this.attachShadow({ mode: 'open' });
 
       const style = createElement('style', { textContent: css });
-      const container = createElement('div', { className: 'ui-file-explorer__container' });
+      const container = createElement('div', { className: 'ui-file-explorer__container', dataset: { status: 'idle' } });
       const content = createElement('div', { className: 'ui-file-explorer__content' });
       const header = createElement('div', { className: 'ui-file-explorer__header' });
+      const headerTitle = createElement('span', {
+        className: 'ui-file-explorer__header-title',
+        textContent: 'e2e tests',
+      });
       const buttons = createElement('div', { className: 'ui-file-explorer__buttons' });
       const minButton = createElement('button', { className: 'ui-file-explorer__min-button' });
       const link = createElement('link', {
@@ -40,18 +45,27 @@ class FileExplorer extends HTMLElement {
       });
 
       const onStarted = () => {
-        this.#started = true;
+        const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
-        console.log('started');
+        this.#status = 'started';
+        this.#container.dataset.status = 'started';
+
+        item.dataset.running = true;
+        item.firstElementChild.textContent = 'stop';
       };
 
       const onCompleted = (result) => {
-        this.#started = false;
+        const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
-        console.log('completed');
+        this.#status = 'idle';
+        this.#test = '';
+        this.#container.dataset.status = 'idle';
+
+        item.dataset.running = false;
+        item.firstElementChild.textContent = 'description';
       };
 
-      const handleOnClick = (e) => {
+      const handleOnClick = async (e) => {
         e.stopPropagation();
 
         const { target } = e;
@@ -68,13 +82,16 @@ class FileExplorer extends HTMLElement {
           }
 
           if (type === 'file') {
-            if (!this.#started) {
-              runTest(target.dataset.name).then(() => {
-                window.runner.onStarted(onStarted);
+            if (this.#status === 'idle') {
+              this.#test = target.dataset.name;
+              this.#status = 'pending';
+              this.#container.dataset.status = 'pending';
 
-                window.runner.onCompleted(onCompleted);
-              });
-            } else {
+              await runTest(target.dataset.name);
+
+              window.runner.onStarted(onStarted);
+              window.runner.onCompleted(onCompleted);
+            } else if (this.#status === 'started') {
               window.runner.abort();
             }
           }
@@ -119,12 +136,25 @@ class FileExplorer extends HTMLElement {
         );
       });
 
-      append(shadowRoot, link, style, append(container, append(header, append(buttons, minButton)), content));
+      append(
+        shadowRoot,
+        link,
+        style,
+        append(container, append(header, append(buttons, minButton), headerTitle), content),
+      );
     }
   }
 
   get #content() {
     return this.shadowRoot.querySelector('.ui-file-explorer__content');
+  }
+
+  get #container() {
+    return this.shadowRoot.querySelector('.ui-file-explorer__container');
+  }
+
+  get #tree() {
+    return this.shadowRoot.querySelector('.ui-file-explorer__content > ul');
   }
 
   #createList(tests) {

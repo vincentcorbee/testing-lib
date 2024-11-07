@@ -1,12 +1,13 @@
 /**
  *
- * @param {string} name
- * @param {Record<string, any> | null} [props]
- * @param {{ is?: string, ns?: string }} [options]
+ * @param { string } type
+ * @param { Record<string, any> | null } [props]
+ * @param { Node[] | null } [children]
+ * @param { { is?: string, ns?: string } } [options]
  * @returns
  */
-export function createElement(name, props, options) {
-  const element = document.createElement(name);
+export function createElement(type, props, children, options) {
+  const element = document.createElement(type);
 
   if (props) {
     Object.entries(props).forEach(([key, val]) => {
@@ -19,6 +20,8 @@ export function createElement(name, props, options) {
       }
     });
   }
+
+  if (children) children.forEach((child) => element.appendChild(child));
 
   return element;
 }
