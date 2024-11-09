@@ -1,5 +1,5 @@
 import { ConsoleReporter } from '../reporters/console.reporter.js';
-import { Reporter } from '../reporters/reporters.type.js';
+import { Reporter } from '../reporters/reporter.type.js';
 import { waitFor } from '../shared/wait-for.js';
 import { MockFunctionFactory } from './mock-function-factory.js';
 import { TestRun } from './test-run.js';
@@ -138,7 +138,7 @@ export class TestRunner {
 
     this.#testRun.start();
 
-    this.#emit('begin');
+    this.#emit('begin', this.#testRun.suite);
 
     await this.#executeDescribe(this.root);
 

@@ -3,12 +3,6 @@ import { Suite, TestCase, TestReport } from '../core/types.js';
 import { AbstractReporter } from './abstract.reporter.js';
 
 export class ConsoleReporter extends AbstractReporter {
-  onBegin(_config: any, _suite: Suite) {}
-
-  onError(error: any, suite: Suite) {
-    // this.#report += this.#handleError(error, suite.depth, suite);
-  }
-
   onEnd(result: TestReport) {
     console.log(this.#createTestReport(result));
   }

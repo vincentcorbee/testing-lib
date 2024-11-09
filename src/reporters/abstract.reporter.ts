@@ -1,8 +1,8 @@
 import { Suite, TestCase, TestResult, TestReport } from '../core/types.js';
-import { Reporter } from './reporters.type.js';
+import { Reporter } from './reporter.type.js';
 
 export abstract class AbstractReporter implements Reporter {
-  onBegin(_config: any, _suite: Suite) {}
+  onBegin(_suite: Suite) {}
 
   onSuiteBegin(_suite: Suite) {}
 
