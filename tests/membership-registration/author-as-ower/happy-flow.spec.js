@@ -8,7 +8,6 @@ import {
   request,
   user,
   event,
-  runner,
   waitFor,
   page,
 } from '../../../dist/index.js';
@@ -31,8 +30,6 @@ import {
   fillPersonalPaymentDetailsBankAccount,
   clickIdentificationSection,
 } from './helpers.js';
-
-globalThis.runner = runner;
 
 describe('Membership registration', () => {
   let personalDetails = {};

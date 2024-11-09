@@ -1,7 +1,5 @@
-import { beforeAll, describe, test, screen, navigation, user, runner, page } from '../../dist/index.js';
+import { beforeAll, describe, test, screen, navigation, user, page } from '../../dist/index.js';
 import { padNumber } from '../utils/pad-number.js';
-
-globalThis.runner = runner;
 
 async function hasFieldError(label, errorMessage) {
   return screen.getByText(errorMessage, { container: await screen.getByLabel(label).parentElement });

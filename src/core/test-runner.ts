@@ -1,5 +1,6 @@
+import { ConsoleReporter } from '../reporters/console.reporter.js';
+import { Reporter } from '../reporters/reporters.type.js';
 import { waitFor } from '../shared/wait-for.js';
-import { AssertionError } from './assertions/index.js';
 import { MockFunctionFactory } from './mock-function-factory.js';
 import { TestRun } from './test-run.js';
 import {
@@ -14,51 +15,9 @@ import {
   MockFunctionImplementation,
   TestBlock,
   TestCallback,
+  TestResult,
+  TestRunnerEvent,
 } from './types.js';
-
-function formatStacktrace(stack: string, indent: number) {
-  return `\x1b[91m${stack
-    .split('\n')
-    .map((line: string) => `${createIndentation(indent)}${line}`)
-    .join('\n')}\x1b[m`;
-}
-
-function createReceivedMessage(received: any) {
-  return `\x1b[mReceived: \x1b[91;1m"${received}"\x1b[m`;
-}
-
-function createExpectedMessage(expected: any, modifier?: string) {
-  return `Expected:${modifier ? ` ${modifier}` : ''} \x1b[92;1m"${expected}\x1b[m"`;
-}
-
-function createTestMessage(name: string, durationString: string, passed: boolean) {
-  const icon = passed ? '\x1b[32;1m✓\x1b[m' : '\x1b[91;1m✕\x1b[m';
-
-  return `${icon} \x1b[90m${name}${durationString ? ` (${durationString})` : ''}\x1b[m`;
-}
-
-function createIndentation(indent: number) {
-  return ' '.repeat(indent);
-}
-
-function createSkippedMessage(name: string) {
-  return `\x1b[93;1m○\x1b[m \x1b[90m\x1b[1mskipped\x1b[22m: ${name}\x1b[m`;
-}
-
-function createTrace(describeBlock: DescribeBlock, testBlock?: TestBlock) {
-  let trace: string[] = [];
-  let parentDescribeBlock: DescribeBlock | null = describeBlock;
-
-  if (testBlock) trace.push(testBlock.name);
-
-  while (parentDescribeBlock) {
-    if (parentDescribeBlock.isRoot === false) trace.unshift(parentDescribeBlock.name);
-
-    parentDescribeBlock = parentDescribeBlock.parent;
-  }
-
-  return `\x1b[91;1m● ${trace.join(' › ')}\x1b[m`;
-}
 
 export class TestRunner {
   #describeBlocks: DescribeBlock[];
@@ -69,7 +28,8 @@ export class TestRunner {
   #testRun: TestRun;
   #isReady: boolean;
   #aborted: boolean;
-  #listeners: Map<'completed' | 'started', Array<(payload?: any) => void>>;
+  #listeners: Map<TestRunnerEvent, Array<(payload?: any) => void>>;
+  #reporters: Reporter[];
 
   #mockFunctions: MockFunction[];
 
@@ -80,8 +40,10 @@ export class TestRunner {
     skip = false,
     only = false,
   ): DescribeBlock {
+    const type = isRoot ? 'root' : 'describe';
+
     return {
-      type: 'describe',
+      type,
       name,
       blocks: [],
       isRoot,
@@ -92,17 +54,37 @@ export class TestRunner {
       beforeEachCallbacks: [...(parent?.beforeEachCallbacks ?? [])],
       afterAllCallbacks: [],
       afterEachCallbacks: [],
+      suite: {
+        name,
+        type,
+        parent: parent?.suite ?? null,
+        entries: [],
+        depth: parent ? parent.suite.depth + 1 : 0,
+        isRoot,
+      },
     };
   }
 
-  static #crateTestBlock(name: string, fn: TestCallback, skip = false, only = false): TestBlock {
-    return {
+  static #createTestBlock(
+    name: string,
+    fn: TestCallback,
+    parent: DescribeBlock,
+    skip = false,
+    only = false,
+  ): TestBlock {
+    const testBlock: TestBlock = {
       type: 'test',
       name,
       fn,
       skip,
       only,
+      testCase: { type: 'test', name, parent: parent.suite, depth: parent.suite.depth + 1, results: [] },
     };
+
+    parent.blocks.push(testBlock);
+    parent.suite.entries.push(testBlock.testCase);
+
+    return testBlock;
   }
 
   constructor() {
@@ -110,11 +92,12 @@ export class TestRunner {
     this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
     this.#shouldSkip = false;
     this.#hasOnly = false;
-    this.#testRun = new TestRun();
+    this.#testRun = new TestRun(this.root.suite);
     this.#mockFunctions = [];
     this.#isReady = false;
     this.#aborted = false;
     this.#listeners = new Map();
+    this.#reporters = [new ConsoleReporter()];
   }
 
   #reset() {
@@ -122,7 +105,7 @@ export class TestRunner {
     this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
     this.#shouldSkip = false;
     this.#hasOnly = false;
-    this.#testRun = new TestRun();
+    this.#testRun = new TestRun(this.root.suite);
     this.#mockFunctions = [];
     this.#aborted = false;
   }
@@ -143,60 +126,51 @@ export class TestRunner {
       if (!this.#isReady) throw Error('Test runner is not ready');
     });
 
-    this.#listeners.get('started')?.forEach((listener) => listener());
+    const [reporter] = this.#reporters;
+
+    this.on('suite:begin', reporter.onSuiteBegin.bind(reporter));
+    this.on('suite:end', reporter.onSuiteEnd.bind(reporter));
+    this.on('test:begin', reporter.onTestBegin.bind(reporter));
+    this.on('test:end', reporter.onTestEnd.bind(reporter));
+    this.on('end', reporter.onEnd.bind(reporter));
+    this.on('begin', reporter.onBegin.bind(reporter));
+    this.on('error', reporter.onError.bind(reporter));
 
     this.#testRun.start();
 
-    this.#testRun.addToReport(await this.#executeDescribe(this.root, 0));
+    this.#emit('begin');
+
+    await this.#executeDescribe(this.root);
 
     this.#testRun.stop();
+
+    this.#emit('end', this.#testRun.report);
   }
 
-  #handleError(error: any, indent: number, describeBlock: DescribeBlock, test?: TestBlock) {
-    let report = '';
-    let errorMessage = '';
-    let chain = '';
+  async #executeBlocks(blocks: Array<DescribeBlock | TestBlock>, describeBlock: DescribeBlock) {
+    for (const block of blocks) {
+      const { type } = block;
 
-    if (error instanceof AssertionError) {
-      const { matcherResult } = error;
-      const { context, expected, actual } = matcherResult;
-
-      if (context && !context.parent) context.parent = { name: 'expect', type: 'expect', value: actual, parent: null };
-
-      chain = matcherResult.chain;
-
-      switch (context?.parent?.name) {
-        case 'not':
-          errorMessage += `${createIndentation(indent + 1)}${createExpectedMessage(expected, context?.parent?.name)}\n`;
-          break;
-        default:
-          errorMessage += `${createIndentation(indent + 1)}${createExpectedMessage(expected)}\n`;
-          errorMessage += `${createIndentation(indent + 1)}${createReceivedMessage(actual)}\n`;
-      }
-    } else {
-      errorMessage += `${createIndentation(indent + 1)}Error message: ${error.message}`;
-
-      report += `${formatStacktrace(error.stack, indent + 1)}\n\n`;
+      if (type === 'describe') await this.#executeDescribe(block);
+      if (type === 'test') await this.#executeTest(block, describeBlock);
     }
-
-    report += `${createIndentation(indent)}${createTrace(describeBlock, test)}\n`;
-
-    if (chain) report += `\n${createIndentation(indent + 1)}${chain}\n`;
-
-    report += `\n${errorMessage}\n`;
-
-    return report;
   }
 
-  async #executeTest(test: TestBlock, describeBlock: DescribeBlock, indent = 0) {
+  async #executeTest(testBlock: TestBlock, describeBlock: DescribeBlock) {
     const testRun = this.#testRun;
-    const { name, fn } = test;
-    const { beforeEachCallbacks, afterEachCallbacks } = describeBlock;
+    const { fn, testCase } = testBlock;
+    const { beforeEachCallbacks, afterEachCallbacks, suite } = describeBlock;
 
-    let report = '';
+    let testResult: TestResult = {};
 
-    if (this.#shouldRunTest(test)) {
+    testCase.results.push(testResult);
+
+    this.#emit('test:begin', testCase, testResult);
+
+    if (this.#shouldRunTest(testBlock)) {
       const start = performance.now();
+
+      testResult.start = start;
 
       try {
         /* Run beforeEach callbacks */
@@ -210,84 +184,81 @@ export class TestRunner {
           throw Error(`${returnValue} is not allowed return value from test function`);
         }
 
+        const end = performance.now();
+        const duration = end - start;
+
         testRun.passed++;
 
-        report += `${createIndentation(indent + 1)}${createTestMessage(name, TestRun.createDurationString(performance.now() - start), true)}\n`;
+        testResult.status = 'passed';
+        testResult.end = end;
+        testResult.duration = duration;
       } catch (error: any) {
-        report += `${createIndentation(indent + 1)}${createTestMessage(name, TestRun.createDurationString(performance.now() - start), false)}\n\n`;
-
-        report += this.#handleError(error, indent + 1, describeBlock, test);
+        const end = performance.now();
+        const duration = end - start;
 
         /* Bail from the test run */
         this.#shouldSkip = true;
 
         testRun.failed++;
+
+        testResult.error = error;
+        testResult.status = 'failed';
+        testResult.end = end;
+        testResult.duration = duration;
       } finally {
         for (const callback of afterEachCallbacks) await callback();
       }
+    } else if (suite.error) {
+      /* Pass the error in the suite to first test */
+
+      testResult.error = suite.error;
+      testResult.status = 'failed';
+      testResult.end = 0;
+      testResult.duration = 0;
+
+      suite.error = undefined;
     } else {
       testRun.skipped++;
 
-      report += `${createIndentation(indent + 1)}${createSkippedMessage(name)}\n`;
+      testResult.status = 'skipped';
     }
 
-    return report;
+    this.#emit('test:end', testCase, testResult);
   }
 
-  async #executeBlocks(blocks: Array<DescribeBlock | TestBlock>, describeBlock: DescribeBlock, indent: number) {
-    const { isRoot } = describeBlock;
+  async #executeDescribe(describeBlock: DescribeBlock) {
+    const { beforeAllCallbacks, afterAllCallbacks, blocks, suite } = describeBlock;
 
-    let describeReport = '';
-    let testReport = '';
-
-    for (const block of blocks) {
-      const { type } = block;
-
-      if (type === 'describe') describeReport += await this.#executeDescribe(block, isRoot ? indent : indent + 1);
-
-      if (type === 'test') testReport += await this.#executeTest(block, describeBlock, indent);
-    }
-
-    return { describeReport, testReport };
-  }
-
-  async #executeDescribe(describeBlock: DescribeBlock, indent = 0) {
-    const { name: blockName, isRoot, beforeAllCallbacks, afterAllCallbacks, blocks } = describeBlock;
-
-    let report = '';
-
-    if (!isRoot) report += `${createIndentation(indent)}\x1b[1m${blockName}\x1b[m\n`;
-
-    let testReport = '';
-    let describeReport = '';
+    this.#emit('suite:begin', suite);
 
     try {
       for (const callback of beforeAllCallbacks) await callback();
 
-      const reports = await this.#executeBlocks(blocks, describeBlock, indent);
-
-      describeReport += reports.describeReport;
-      testReport += reports.testReport;
+      await this.#executeBlocks(blocks, describeBlock);
 
       for (const callback of afterAllCallbacks) await callback();
     } catch (error: any) {
-      report += this.#handleError(error, indent, describeBlock);
+      this.#emit('error', error, suite);
 
-      /* Unwind tests for reporting */
+      suite.error = error;
+
+      /* Unwind tests */
 
       this.#shouldSkip = true;
 
-      const reports = await this.#executeBlocks(blocks, describeBlock, indent);
-
-      describeReport += reports.describeReport;
-      testReport += reports.testReport;
+      await this.#executeBlocks(blocks, describeBlock);
     }
 
-    /* Ouput test report before nested describe blocks */
-    return report + testReport + describeReport;
+    this.#emit('suite:end', suite);
   }
 
-  on(event: 'completed' | 'started', listener: (result: string) => void) {
+  #emit(event: TestRunnerEvent, ...args: any) {
+    const listeners = this.#listeners.get(event);
+
+    if (listeners) listeners.forEach((listener) => listener.call(listener, ...args));
+  }
+
+  on(event: TestRunnerEvent, listener: (...payload: any) => void) {
     const listeners = this.#listeners.get(event);
 
     if (listeners === undefined) {
@@ -299,7 +270,7 @@ export class TestRunner {
     return this;
   }
 
-  off(event: 'completed' | 'started', listener: (result: string) => void) {
+  off(event: TestRunnerEvent, listener: (...payload: any) => void) {
     const listeners = this.#listeners.get(event);
 
     if (listeners)
@@ -332,8 +303,12 @@ export class TestRunner {
   async test(name: string, fn: TestCallback, skip?: boolean, only?: boolean) {
     const { currentDescribeBlock } = this;
 
-    currentDescribeBlock.blocks.push(
-      TestRunner.#crateTestBlock(name, fn, currentDescribeBlock.skip || skip, currentDescribeBlock.only || only),
+    TestRunner.#createTestBlock(
+      name,
+      fn,
+      currentDescribeBlock,
+      currentDescribeBlock.skip || skip,
+      currentDescribeBlock.only || only,
     );
 
     if (only) this.#hasOnly = true;
@@ -354,6 +329,8 @@ export class TestRunner {
 
     // @ts-ignore
     currentDescribeBlock.blocks.push(name);
+    // @ts-ignore
+    currentDescribeBlock.suite.entries.push(name);
 
     await fn();
 
@@ -383,16 +360,14 @@ export class TestRunner {
     */
     if (describeBlocks.length === 0) {
       root.blocks[index] = describeBlock;
+      root.suite.entries[index] = describeBlock.suite;
 
       await this.#startTestRun();
-
-      this.#listeners.get('completed')?.forEach((listener) => listener(this.#testRun.report));
-
-      console.log(this.#testRun.report);
 
       this.#reset();
     } else {
       parentDescribeBlock.blocks[index] = describeBlock;
+      parentDescribeBlock.suite.entries[index] = describeBlock.suite;
     }
   }
 

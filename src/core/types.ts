@@ -27,6 +27,7 @@ export type TestBlock = {
   fn: TestCallback;
   skip?: boolean;
   only?: boolean;
+  testCase: TestCase;
 };
 
 export type TestCallback = Callback;
@@ -41,7 +42,7 @@ export type GenericFunction = (...args: any) => any;
 export type Interceptor = (original: GenericFunction, ...args: any[]) => any;
 
 export type DescribeBlock = {
-  type: 'describe';
+  type: 'describe' | 'root';
   name: string;
   blocks: Array<DescribeBlock | TestBlock>;
   isRoot: boolean;
@@ -52,6 +53,55 @@ export type DescribeBlock = {
   beforeEachCallbacks: BeforeEachCallback[];
   afterAllCallbacks: AfterAllCallback[];
   afterEachCallbacks: AfterEachCallback[];
+  suite: Suite;
+};
+
+export type TestRunnerEvent =
+  | 'completed'
+  | 'started'
+  | 'test:begin'
+  | 'test:end'
+  | 'suite:begin'
+  | 'suite:end'
+  | 'end'
+  | 'begin'
+  | 'error';
+
+export type TestResultStatus = 'passed' | 'failed' | 'skipped';
+
+export type TestResult = {
+  status?: TestResultStatus;
+  error?: any;
+  duration?: number;
+  start?: number;
+  end?: number;
+};
+
+export type Suite = {
+  type: 'describe' | 'root';
+  name: string;
+  entries: Array<Suite | TestCase>;
+  parent: Suite | null;
+  isRoot: boolean;
+  depth: number;
+  error?: any;
+};
+
+export type TestCase = {
+  type: 'test';
+  name: string;
+  parent: Suite;
+  depth: number;
+  results: TestResult[];
+};
+
+export type TestReport = {
+  passed: number;
+  failed: number;
+  skipped: number;
+  total: number;
+  duration: number;
+  suite: Suite;
 };
 
 export type Runner = {
@@ -61,9 +111,9 @@ export type Runner = {
   resetAllMock(): void;
   restoreAllMock(): void;
   abort(): void;
-  onCompleted(fn: (result: string) => void): void;
-  onStarted(fn: () => void): void;
-  off(event: 'completed' | 'started', fn: (result?: string) => void): void;
+  onEnd(fn: (result: string) => void): void;
+  onBegin(fn: () => void): void;
+  off(event: 'begin' | 'end', fn: (result?: string) => void): void;
   removeAllListeners(): void;
 };
 

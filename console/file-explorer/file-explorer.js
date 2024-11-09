@@ -44,7 +44,7 @@ class FileExplorer extends HTMLElement {
         href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=folder_open',
       });
 
-      const onStarted = () => {
+      const onBegin = () => {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
         this.#status = 'started';
@@ -54,7 +54,7 @@ class FileExplorer extends HTMLElement {
         item.firstElementChild.textContent = 'stop';
       };
 
-      const onCompleted = (result) => {
+      const onEnd = (result) => {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
         this.#status = 'idle';
@@ -89,8 +89,8 @@ class FileExplorer extends HTMLElement {
 
               await runTest(target.dataset.name);
 
-              window.runner.onStarted(onStarted);
-              window.runner.onCompleted(onCompleted);
+              window.runner.onBegin(onBegin);
+              window.runner.onEnd(onEnd);
             } else if (this.#status === 'started') {
               window.runner.abort();
             }
