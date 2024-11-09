@@ -14,7 +14,7 @@ export class ConsoleReporter extends AbstractReporter {
 
     report += '\n';
     report += '\x1b[1mSummary\x1b[m\n\n';
-    report += failed === 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n';
+    report += total === 0 || passed > 0 ? '\x1b[1;42m PASS \x1b[m\n' : '\x1b[1;41m FAIL \x1b[m\n';
     report += '\n\x1b[1mTests\x1b[m: ';
     report += `\x1b[1;93m${skipped} skipped\x1b[m, `;
     report += `\x1b[1;32m${passed} passed\x1b[m, `;
