@@ -1,5 +1,6 @@
 import { ConsoleReporter } from '../reporters/console.reporter.js';
-import { Reporter } from '../reporters/reporter.type.js';
+import { HTMLReporter } from '../reporters/html.reporter.js';
+import { ReporterInterface } from '../reporters/types.js';
 import { waitFor } from '../shared/wait-for.js';
 import { MockFunctionFactory } from './mock-function-factory.js';
 import { TestRun } from './test-run.js';
@@ -13,8 +14,10 @@ import {
   Interceptor,
   MockFunction,
   MockFunctionImplementation,
+  ReporterConfig,
   TestBlock,
   TestCallback,
+  TestConfig,
   TestResult,
   TestRunnerEvent,
 } from './types.js';
@@ -29,7 +32,8 @@ export class TestRunner {
   #isReady: boolean;
   #aborted: boolean;
   #listeners: Map<TestRunnerEvent, Array<(payload?: any) => void>>;
-  #reporters: Reporter[];
+  #reporters: ReporterInterface[];
+  #config: TestConfig;
 
   #mockFunctions: MockFunction[];
 
@@ -87,7 +91,7 @@ export class TestRunner {
     return testBlock;
   }
 
-  constructor() {
+  constructor(config: TestConfig = {}) {
     this.#describeBlocks = [];
     this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
     this.#shouldSkip = false;
@@ -97,7 +101,202 @@ export class TestRunner {
     this.#isReady = false;
     this.#aborted = false;
     this.#listeners = new Map();
-    this.#reporters = [new ConsoleReporter()];
+    this.#config = config;
+    this.#reporters = this.#getReporters();
+  }
+
+  setConfig(config: TestConfig) {
+    this.#config = config;
+
+    this.#reporters = this.#getReporters();
+
+    return this;
+  }
+
+  on(event: TestRunnerEvent, listener: (...payload: any) => void) {
+    const listeners = this.#listeners.get(event);
+
+    if (listeners === undefined) {
+      this.#listeners.set(event, [listener]);
+    } else if (listeners.every((fn) => fn !== listener)) {
+      listeners.push(listener);
+    }
+
+    return this;
+  }
+
+  off(event: TestRunnerEvent, listener: (...payload: any) => void) {
+    const listeners = this.#listeners.get(event);
+
+    if (listeners)
+      this.#listeners.set(
+        event,
+        listeners.filter((fn) => fn !== listener),
+      );
+
+    return this;
+  }
+
+  removeAllListeners() {
+    this.#listeners.clear();
+
+    return this;
+  }
+
+  ready() {
+    this.#isReady = true;
+  }
+
+  abort() {
+    this.#aborted = true;
+  }
+
+  get started() {
+    return this.#testRun.started;
+  }
+
+  async test(name: string, fn: TestCallback, skip?: boolean, only?: boolean) {
+    const { currentDescribeBlock } = this;
+
+    TestRunner.#createTestBlock(
+      name,
+      fn,
+      currentDescribeBlock,
+      currentDescribeBlock.skip || skip,
+      currentDescribeBlock.only || only,
+    );
+
+    if (only) this.#hasOnly = true;
+  }
+
+  async describe(name: string, fn: DescribeCallback, skip?: boolean, only?: boolean) {
+    const { currentDescribeBlock, root } = this;
+    const describeBlock = TestRunner.#createDescribeBlock(name, currentDescribeBlock, false, skip, only);
+    const describeBlocks = this.#describeBlocks;
+
+    if (only) this.#hasOnly = true;
+
+    this.currentDescribeBlock = describeBlock;
+
+    describeBlocks.unshift(describeBlock);
+
+    const index = currentDescribeBlock.blocks.length;
+
+    // @ts-ignore
+    currentDescribeBlock.blocks.push(name);
+    // @ts-ignore
+    currentDescribeBlock.suite.entries.push(name);
+
+    await fn();
+
+    describeBlock.afterEachCallbacks.push(...currentDescribeBlock.afterEachCallbacks);
+
+    let i = describeBlocks.length - 1;
+
+    while (i >= -1) {
+      if (i === -1) break;
+      if (describeBlocks[i] === describeBlock) break;
+
+      i--;
+    }
+
+    let parentDescribeBlock: DescribeBlock;
+
+    if (i !== -1) {
+      describeBlocks.splice(i, 1);
+
+      parentDescribeBlock = describeBlocks[i] ?? root;
+    } else {
+      parentDescribeBlock = root;
+    }
+
+    /*
+      If there are no more describe blocks, we have reached the end of the test suite.
+    */
+    if (describeBlocks.length === 0) {
+      root.blocks[index] = describeBlock;
+      root.suite.entries[index] = describeBlock.suite;
+
+      await this.#startTestRun();
+
+      this.#reset();
+    } else {
+      parentDescribeBlock.blocks[index] = describeBlock;
+      parentDescribeBlock.suite.entries[index] = describeBlock.suite;
+    }
+  }
+
+  mockFunction(mockImplementation?: MockFunctionImplementation): MockFunction {
+    const mockFunction = MockFunctionFactory(mockImplementation);
+
+    this.#mockFunctions.push(mockFunction);
+
+    return mockFunction;
+  }
+
+  intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction {
+    return MockFunctionFactory(interceptor, { object, methodName });
+  }
+
+  beforeAll(fn: BeforeAllCallback) {
+    this.currentDescribeBlock.beforeAllCallbacks.push(fn);
+  }
+
+  beforeEach(fn: BeforeEachCallback) {
+    this.currentDescribeBlock.beforeEachCallbacks.push(fn);
+  }
+
+  afterAll(fn: AfterAllCallback) {
+    this.currentDescribeBlock.afterAllCallbacks.push(fn);
+  }
+
+  afterEach(fn: AfterEachCallback) {
+    this.currentDescribeBlock.afterEachCallbacks.push(fn);
+  }
+
+  clearAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.clear();
+    }
+  }
+
+  resetAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.reset();
+    }
+  }
+
+  restoreAllMock() {
+    for (const mockFunction of this.#mockFunctions) {
+      mockFunction.restore();
+    }
+  }
+
+  #getReporter(reporter: ReporterConfig) {
+    const { name, options } = reporter;
+
+    switch (name) {
+      case 'console':
+        return new ConsoleReporter();
+      case 'html':
+        return new HTMLReporter(options);
+      default:
+        throw Error('Reporter not found');
+    }
+  }
+
+  #getReporters() {
+    const { reporters = [] } = this.#config;
+
+    if (reporters.length === 0) return [new ConsoleReporter()];
+
+    return reporters.map((reporterConfig) => {
+      if (typeof reporterConfig === 'string') return this.#getReporter({ name: reporterConfig });
+
+      if ('name' in reporterConfig) return this.#getReporter(reporterConfig);
+
+      return reporterConfig;
+    });
   }
 
   #reset() {
@@ -126,15 +325,15 @@ export class TestRunner {
       if (!this.#isReady) throw Error('Test runner is not ready');
     });
 
-    const [reporter] = this.#reporters;
-
-    this.on('suite:begin', reporter.onSuiteBegin.bind(reporter));
-    this.on('suite:end', reporter.onSuiteEnd.bind(reporter));
-    this.on('test:begin', reporter.onTestBegin.bind(reporter));
-    this.on('test:end', reporter.onTestEnd.bind(reporter));
-    this.on('end', reporter.onEnd.bind(reporter));
-    this.on('begin', reporter.onBegin.bind(reporter));
-    this.on('error', reporter.onError.bind(reporter));
+    this.#reporters.forEach((reporter) => {
+      this.on('suite:begin', reporter.onSuiteBegin.bind(reporter));
+      this.on('suite:end', reporter.onSuiteEnd.bind(reporter));
+      this.on('test:begin', reporter.onTestBegin.bind(reporter));
+      this.on('test:end', reporter.onTestEnd.bind(reporter));
+      this.on('end', reporter.onEnd.bind(reporter));
+      this.on('begin', reporter.onBegin.bind(reporter));
+      this.on('error', reporter.onError.bind(reporter));
+    });
 
     this.#testRun.start();
 
@@ -144,7 +343,7 @@ export class TestRunner {
 
     this.#testRun.stop();
 
-    this.#emit('end', this.#testRun.report);
+    this.#emit('end', this.#testRun.result);
   }
 
   async #executeBlocks(blocks: Array<DescribeBlock | TestBlock>, describeBlock: DescribeBlock) {
@@ -256,164 +455,5 @@ export class TestRunner {
     const listeners = this.#listeners.get(event);
 
     if (listeners) listeners.forEach((listener) => listener.call(listener, ...args));
-  }
-
-  on(event: TestRunnerEvent, listener: (...payload: any) => void) {
-    const listeners = this.#listeners.get(event);
-
-    if (listeners === undefined) {
-      this.#listeners.set(event, [listener]);
-    } else if (listeners.every((fn) => fn !== listener)) {
-      listeners.push(listener);
-    }
-
-    return this;
-  }
-
-  off(event: TestRunnerEvent, listener: (...payload: any) => void) {
-    const listeners = this.#listeners.get(event);
-
-    if (listeners)
-      this.#listeners.set(
-        event,
-        listeners.filter((fn) => fn !== listener),
-      );
-
-    return this;
-  }
-
-  removeAllListeners() {
-    this.#listeners.clear();
-
-    return this;
-  }
-
-  ready() {
-    this.#isReady = true;
-  }
-
-  abort() {
-    this.#aborted = true;
-  }
-
-  get started() {
-    return this.#testRun.started;
-  }
-
-  async test(name: string, fn: TestCallback, skip?: boolean, only?: boolean) {
-    const { currentDescribeBlock } = this;
-
-    TestRunner.#createTestBlock(
-      name,
-      fn,
-      currentDescribeBlock,
-      currentDescribeBlock.skip || skip,
-      currentDescribeBlock.only || only,
-    );
-
-    if (only) this.#hasOnly = true;
-  }
-
-  async describe(name: string, fn: DescribeCallback, skip?: boolean, only?: boolean) {
-    const { currentDescribeBlock, root } = this;
-    const describeBlock = TestRunner.#createDescribeBlock(name, currentDescribeBlock, false, skip, only);
-    const describeBlocks = this.#describeBlocks;
-
-    if (only) this.#hasOnly = true;
-
-    this.currentDescribeBlock = describeBlock;
-
-    describeBlocks.unshift(describeBlock);
-
-    const index = currentDescribeBlock.blocks.length;
-
-    // @ts-ignore
-    currentDescribeBlock.blocks.push(name);
-    // @ts-ignore
-    currentDescribeBlock.suite.entries.push(name);
-
-    await fn();
-
-    describeBlock.afterEachCallbacks.push(...currentDescribeBlock.afterEachCallbacks);
-
-    let i = describeBlocks.length - 1;
-
-    while (i >= -1) {
-      if (i === -1) break;
-      if (describeBlocks[i] === describeBlock) break;
-
-      i--;
-    }
-
-    let parentDescribeBlock: DescribeBlock;
-
-    if (i !== -1) {
-      describeBlocks.splice(i, 1);
-
-      parentDescribeBlock = describeBlocks[i] ?? root;
-    } else {
-      parentDescribeBlock = root;
-    }
-
-    /*
-      We should have no more describe blocks so we have reached the end of the test suite.
-    */
-    if (describeBlocks.length === 0) {
-      root.blocks[index] = describeBlock;
-      root.suite.entries[index] = describeBlock.suite;
-
-      await this.#startTestRun();
-
-      this.#reset();
-    } else {
-      parentDescribeBlock.blocks[index] = describeBlock;
-      parentDescribeBlock.suite.entries[index] = describeBlock.suite;
-    }
-  }
-
-  mockFunction(mockImplementation?: MockFunctionImplementation): MockFunction {
-    const mockFunction = MockFunctionFactory(mockImplementation);
-
-    this.#mockFunctions.push(mockFunction);
-
-    return mockFunction;
-  }
-
-  intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction {
-    return MockFunctionFactory(interceptor, { object, methodName });
-  }
-
-  beforeAll(fn: BeforeAllCallback) {
-    this.currentDescribeBlock.beforeAllCallbacks.push(fn);
-  }
-
-  beforeEach(fn: BeforeEachCallback) {
-    this.currentDescribeBlock.beforeEachCallbacks.push(fn);
-  }
-
-  afterAll(fn: AfterAllCallback) {
-    this.currentDescribeBlock.afterAllCallbacks.push(fn);
-  }
-
-  afterEach(fn: AfterEachCallback) {
-    this.currentDescribeBlock.afterEachCallbacks.push(fn);
-  }
-
-  clearAllMock() {
-    for (const mockFunction of this.#mockFunctions) {
-      mockFunction.clear();
-    }
-  }
-
-  resetAllMock() {
-    for (const mockFunction of this.#mockFunctions) {
-      mockFunction.reset();
-    }
-  }
-
-  restoreAllMock() {
-    for (const mockFunction of this.#mockFunctions) {
-      mockFunction.restore();
-    }
   }
 }

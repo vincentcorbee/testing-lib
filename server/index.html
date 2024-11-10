@@ -2,8 +2,16 @@
   <head>
     <title>UI testing</title>
     <style>
+      html {
+        font-family: Arial, sans-serif;
+      }
       .row:not(:last-child) {
         margin-bottom: 16px;
+      }
+
+      #report {
+        margin-top: 16px;
+        /* max-width: 800px; */
       }
     </style>
   </head>
@@ -37,6 +45,7 @@
     <div>
       <div data-e2e="output"></div>
     </div>
+    <div id="report"></div>
     <script type="importmap">
       {
         "imports": {
@@ -57,7 +66,38 @@
         navigation,
         request,
         waitFor,
+        defineConfig,
       } from 'e2e';
+
+      defineConfig({
+        reporters: [
+          {
+            name: 'html',
+            options: {
+              onEnd(report) {
+                /* Append report to the DOM */
+                const fragment = document.createDocumentFragment();
+                const template = document.createElement('template');
+
+                template.innerHTML = report;
+                fragment.appendChild(template.content);
+
+                const reportScript = fragment.querySelector('script');
+
+                reportScript.remove();
+
+                const script = document.createElement('script');
+
+                script.textContent = reportScript.textContent;
+
+                App.DOM.report.appendChild(fragment);
+                App.DOM.report.appendChild(script);
+              },
+            },
+          },
+        ],
+      });
+
       const App = {
         data: {
           firstname: '',
@@ -72,6 +112,7 @@
           gender: document.querySelector('[data-e2e="gender"]'),
           button: document.querySelector('[data-e2e="button"]'),
           email: document.getElementById('email'),
+          report: document.getElementById('report'),
         },
         addListeners() {
           const {
@@ -147,6 +188,12 @@
           ).toBeDefined();
 
           await page.location('/', { timeout: 2000 });
+
+          throw Error('This is an error');
+        });
+
+        test('should skip', () => {
+          expect(true).toBe(true);
         });
       });
     </script>

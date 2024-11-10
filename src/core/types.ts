@@ -1,3 +1,5 @@
+import { ReporterInterface, Reporters } from '../reporters/types.js';
+
 export type Intercept = {
   (...args: any[]): any;
   restore: () => void;
@@ -95,7 +97,7 @@ export type TestCase = {
   results: TestResult[];
 };
 
-export type TestReport = {
+export type FullResult = {
   passed: number;
   failed: number;
   skipped: number;
@@ -151,4 +153,12 @@ export type ExpectContext = {
   type: 'matcher' | 'modifier' | 'expect';
   value?: any;
   parent: ExpectContext | null;
+};
+
+export type ReporterConfig = { name: Reporters; options?: any };
+
+export type TestConfigReporter = ReporterInterface | Reporters | ReporterConfig;
+
+export type TestConfig = {
+  reporters?: TestConfigReporter[];
 };

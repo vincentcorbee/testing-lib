@@ -14,6 +14,7 @@ import {
   MockFunctionImplementation,
   Runner,
   TestCallback,
+  TestConfig,
 } from './types.js';
 import { env } from '../shared/env.js';
 import { getFaker } from '../shared/get-faker.js';
@@ -27,6 +28,10 @@ getFaker().then((faker: any) => {
 
   testRunner.ready();
 });
+
+export function defineConfig(config: TestConfig) {
+  testRunner.setConfig(config);
+}
 
 export function beforeAll(fn: BeforeAllCallback) {
   testRunner.beforeAll(fn);

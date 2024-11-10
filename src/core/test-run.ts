@@ -1,4 +1,4 @@
-import { Suite, TestReport } from './types.js';
+import { Suite, FullResult } from './types.js';
 
 export class TestRun {
   skipped: number;
@@ -34,7 +34,7 @@ export class TestRun {
     return this.#duration;
   }
 
-  get report(): TestReport {
+  get result(): FullResult {
     return {
       passed: this.passed,
       failed: this.failed,

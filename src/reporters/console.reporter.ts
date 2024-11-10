@@ -1,13 +1,13 @@
 import { AssertionError } from '../core/assertions/index.js';
-import { Suite, TestCase, TestReport } from '../core/types.js';
-import { AbstractReporter } from './abstract.reporter.js';
+import { Suite, TestCase, FullResult } from '../core/types.js';
+import { Reporter } from './reporter.js';
 
-export class ConsoleReporter extends AbstractReporter {
-  onEnd(result: TestReport) {
+export class ConsoleReporter extends Reporter {
+  onEnd(result: FullResult) {
     console.log(this.#createTestReport(result));
   }
 
-  #createTestReport(result: TestReport) {
+  #createTestReport(result: FullResult) {
     const { duration, skipped, failed, passed, total } = result;
 
     let report = this.#processSuite(result.suite);
@@ -29,20 +29,13 @@ export class ConsoleReporter extends AbstractReporter {
     const { isRoot, name, depth, error } = suite;
 
     let report = '';
-    let testReport = '';
-    let describeReport = '';
 
     if (!isRoot) report += `${this.#createIndentation(depth - 1)}\x1b[1m${name}\x1b[m\n`;
 
     if (error) report += this.#handleError(error, depth, suite);
 
-    const reports = this.#processEntries(suite.entries);
-
-    describeReport += reports.describeReport;
-    testReport += reports.testReport;
-
     /* Ouput test report before nested describe blocks */
-    return report + testReport + describeReport;
+    return report + this.#processEntries(suite.entries);
   }
 
   #processTest(testCase: TestCase) {
@@ -70,7 +63,7 @@ export class ConsoleReporter extends AbstractReporter {
       if (type === 'test') testReport += this.#processTest(entry);
     }
 
-    return { describeReport, testReport };
+    return testReport + describeReport;
   }
 
   #handleError(error: any, indent: number, suite: Suite, testCase?: TestCase) {
