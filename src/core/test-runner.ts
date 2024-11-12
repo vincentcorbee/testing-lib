@@ -1,5 +1,6 @@
 import { ConsoleReporter } from '../reporters/console.reporter.js';
 import { HTMLReporter } from '../reporters/html.reporter.js';
+import { JUnitReporter } from '../reporters/junit.reporter.js';
 import { ReporterInterface } from '../reporters/types.js';
 import { waitFor } from '../shared/wait-for.js';
 import { MockFunctionFactory } from './mock-function-factory.js';
@@ -280,6 +281,8 @@ export class TestRunner {
         return new ConsoleReporter();
       case 'html':
         return new HTMLReporter(options);
+      case 'junit':
+        return new JUnitReporter(options);
       default:
         throw Error('Reporter not found');
     }

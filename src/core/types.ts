@@ -98,6 +98,7 @@ export type TestCase = {
 };
 
 export type FullResult = {
+  status: TestResultStatus;
   passed: number;
   failed: number;
   skipped: number;
@@ -117,6 +118,7 @@ export type Runner = {
   onBegin(fn: () => void): void;
   off(event: 'begin' | 'end', fn: (result?: string) => void): void;
   removeAllListeners(): void;
+  defineConfig(config: TestConfig): void;
 };
 
 export type MatcherResultInterface = {

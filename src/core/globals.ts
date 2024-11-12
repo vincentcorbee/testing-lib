@@ -120,6 +120,9 @@ export const runner: Runner = {
   removeAllListeners() {
     testRunner.removeAllListeners();
   },
+  defineConfig(config: TestConfig) {
+    testRunner.setConfig(config);
+  },
 };
 
 if (env === 'browser') {

@@ -12,4 +12,4 @@ export interface ReporterInterface {
 
 export type Reporter = ReporterInterface;
 
-export type Reporters = 'console' | 'html';
+export type Reporters = 'console' | 'html' | 'junit';

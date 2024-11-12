@@ -15,11 +15,11 @@ export class TestRun {
     this.passed = 0;
     this.failed = 0;
     this.skipped = 0;
+    this.suite = suite;
     this.#started = false;
     this.#timestampStart = 0;
     this.#timestampEnd = 0;
     this.#duration = 0;
-    this.suite = suite;
   }
 
   get total() {
@@ -36,6 +36,7 @@ export class TestRun {
 
   get result(): FullResult {
     return {
+      status: this.total === 0 || this.passed > 0 ? 'passed' : 'failed',
       passed: this.passed,
       failed: this.failed,
       skipped: this.skipped,
