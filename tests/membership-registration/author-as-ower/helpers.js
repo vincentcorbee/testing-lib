@@ -85,7 +85,6 @@ export async function startAuthorAsOwnerRegistration() {
   await clickStartRegistrationAsAuthorCard();
   await expect(
     request.waitForRequest('/graphql', async (request) => {
-      console.log(request.body);
       if (!request.body.includes('startAuthorRegistrationAsOwner')) return false;
 
       const response = await request.json();
@@ -97,6 +96,7 @@ export async function startAuthorAsOwnerRegistration() {
   ).resolves.toEqual(true);
 
   await page.location(/overview$/);
+  await waitForPageload();
   await screen.getByRole('heading', { name: 'Start je registratie' });
 }
 

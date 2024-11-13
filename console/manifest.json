@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "e2e console",
+  "description": "e2e console",
+  "version": "1.0",
+  "permissions": ["scripting", "activeTab", "webNavigation"],
+  "host_permissions": ["http://localhost/*", "https://login-acc.bumastemra.nl/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {}
+}

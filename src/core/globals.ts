@@ -125,6 +125,8 @@ export const runner: Runner = {
   },
 };
 
+globalThis.runner = runner;
+
 if (env === 'browser') {
   testRunner.intercept(XMLHttpRequest.prototype, 'open', xmlHttpRequestOpenInterceptor);
   testRunner.intercept(XMLHttpRequest.prototype, 'send', xmlHttpRequestSendInterceptor);
@@ -155,8 +157,6 @@ if (env === 'browser') {
     },
   };
 } else {
-  globalThis.runner = runner;
-
   globalThis.__navigation__ = globalThis.__navigation__ ?? {
     navigate() {},
     back() {},

@@ -1,6 +1,7 @@
 import { runTest } from '../run-test.js';
 import { append, createElement } from '../utils/index.js';
 import { css } from './file-explorer.css.js';
+import { HTMLReporter } from 'http://localhost:8000/dist/reporters/index.js';
 
 class FileExplorer extends HTMLElement {
   constructor() {
@@ -44,7 +45,7 @@ class FileExplorer extends HTMLElement {
         href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=folder_open',
       });
 
-      const onBegin = () => {
+      const onBegin = (suite) => {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
         this.#status = 'started';
@@ -56,6 +57,51 @@ class FileExplorer extends HTMLElement {
 
       const onEnd = (result) => {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
+        const reporter = new HTMLReporter({
+          onEnd: (report) => {
+            /* Append report to the DOM */
+            const fragment = document.createDocumentFragment();
+            const template = document.createElement('template');
+
+            template.innerHTML = report;
+            fragment.appendChild(template.content);
+
+            const reportScript = fragment.querySelector('script');
+
+            reportScript.remove();
+
+            const script = document.createElement('script');
+
+            script.textContent = reportScript.textContent;
+
+            const closeButton = createElement('button', {
+              textContent: 'Sluiten',
+              style: `border: 0; margin-left: auto; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;`,
+            });
+
+            const dialog = createElement(
+              'dialog',
+              {
+                style: `
+              border: none;
+              padding: 0;
+              border-radius: 16px;
+            `,
+              },
+              [createElement('div', { style: `padding: 16px;` }, [closeButton]), fragment, script],
+            );
+
+            closeButton.addEventListener('click', () => {
+              dialog.close();
+              dialog.remove();
+            });
+
+            document.body.appendChild(dialog);
+
+            dialog.showModal();
+          },
+        });
+        reporter.onEnd(result);
 
         this.#status = 'idle';
         this.#test = '';

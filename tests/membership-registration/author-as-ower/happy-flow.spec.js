@@ -230,11 +230,13 @@ describe('Membership registration', () => {
 
       const result = await graphQL.blockPersonalPaymentDetails(registration.id);
 
-      await expect(result.data).toBeDefined();
+      expect(result.data).toBeDefined();
     });
 
     test('should set personal payment details again', async () => {
       navigation.reload('/membership-registration');
+
+      await page.location(/\/personal-data$/);
 
       await user.click(await screen.getByRole('button', { name: 'Wijzigen', index: 2 }));
       await waitForPageload();
@@ -250,9 +252,11 @@ describe('Membership registration', () => {
 
       const result = await graphQL.approvePersonalPaymentDetails(registration.id);
 
-      await expect(result.data).toBeDefined();
+      expect(result.data).toBeDefined();
 
       navigation.reload(`/membership-registration/${registration.id}/overview`);
+
+      await page.location(/\/overview$/);
 
       await screen.getByRole('heading', { level: 1, name: 'Persoonlijke data' });
     });
@@ -368,7 +372,7 @@ describe('Membership registration', () => {
 
         const result = await graphQL.approveIdentificationByIdentificationDocument(registration.identification.id);
 
-        await expect(result.data).toBeDefined();
+        expect(result.data).toBeDefined();
       });
     });
 

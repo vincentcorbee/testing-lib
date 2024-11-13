@@ -36,7 +36,7 @@ export class TestRun {
 
   get result(): FullResult {
     return {
-      status: this.total === 0 || this.passed > 0 ? 'passed' : 'failed',
+      status: this.failed === 0 && (this.total === 0 || this.passed > 0) ? 'passed' : 'failed',
       passed: this.passed,
       failed: this.failed,
       skipped: this.skipped,

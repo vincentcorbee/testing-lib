@@ -270,6 +270,9 @@ export class HTMLReporter extends Reporter {
         height: var(--icon-button-outline-height);
         border: var(--icon-button-outline-outline-width) solid hsl(var(--color-on-surface));
         border-radius: var(--icon-button-shape);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .icon-button-outline svg {
