@@ -188,12 +188,14 @@
           ).toBeDefined();
 
           await page.location('/', { timeout: 2000 });
+        });
 
-          throw Error('This is an error');
+        test('should fail', () => {
+          expect(true).not.toEqual(true);
         });
 
         test('should skip', () => {
-          expect(true).toBe(true);
+          expect(1).not.toEqual(2);
         });
       });
     </script>

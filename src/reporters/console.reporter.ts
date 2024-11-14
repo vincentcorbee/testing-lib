@@ -32,7 +32,7 @@ export class ConsoleReporter extends Reporter {
 
     if (!isRoot) report += `${this.#createIndentation(depth - 1)}\x1b[1m${name}\x1b[m\n`;
 
-    if (error) report += this.#handleError(error, depth, suite);
+    if (error) report += this.#handleError(error, depth - 1, suite);
 
     /* Ouput test report before nested describe blocks */
     return report + this.#processEntries(suite.entries);
@@ -44,7 +44,7 @@ export class ConsoleReporter extends Reporter {
 
     switch (status) {
       case 'failed':
-        return `${this.#createIndentation(depth - 1)}${this.#createTestMessage(name, this.#createDurationString(duration ?? 0), false)}\n\n${this.#handleError(error, depth, parent, testCase)}`;
+        return `${this.#createIndentation(depth - 1)}${this.#createTestMessage(name, this.#createDurationString(duration ?? 0), false)}\n\n${this.#handleError(error, depth - 1, parent, testCase)}`;
       case 'skipped':
         return `${this.#createIndentation(depth - 1)}${this.#createSkippedMessage(name)}\n`;
       default:
@@ -81,11 +81,11 @@ export class ConsoleReporter extends Reporter {
 
       switch (context?.parent?.name) {
         case 'not':
-          errorMessage += `${this.#createIndentation(indent + 1)}${this.#createExpectedMessage(expected, context?.parent?.name)}\n`;
+          errorMessage += `${this.#createIndentation(indent)}${this.#createExpectedMessage(expected, context?.parent?.name)}\n`;
           break;
         default:
-          errorMessage += `${this.#createIndentation(indent + 1)}${this.#createExpectedMessage(expected)}\n`;
-          errorMessage += `${this.#createIndentation(indent + 1)}${this.#createReceivedMessage(actual)}\n`;
+          errorMessage += `${this.#createIndentation(indent)}${this.#createExpectedMessage(expected)}\n`;
+          errorMessage += `${this.#createIndentation(indent)}${this.#createReceivedMessage(actual)}\n`;
       }
     } else {
       errorMessage += `${this.#createIndentation(indent)}Error message: ${error.message}`;
@@ -124,7 +124,7 @@ export class ConsoleReporter extends Reporter {
   }
 
   #createExpectedMessage(expected: any, modifier?: string) {
-    return `Expected:${modifier ? ` ${modifier}` : ''} \x1b[92;1m"${expected}\x1b[m"`;
+    return `Expected:${modifier ? ` ${modifier}` : ''} \x1b[92;1m"${expected}"\x1b[m`;
   }
 
   #createTestMessage(name: string, durationString: string, passed: boolean) {

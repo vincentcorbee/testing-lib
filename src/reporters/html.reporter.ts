@@ -1,5 +1,5 @@
 import { AssertionError } from '../core/assertions/index.js';
-import { Suite, TestCase, FullResult } from '../core/types.js';
+import { Suite, TestCase, FullResult, MatcherResultInterface, ExpectContext } from '../core/types.js';
 import { Reporter } from './reporter.js';
 
 export type HTMLReporterOptions = {
@@ -23,7 +23,7 @@ export class HTMLReporter extends Reporter {
       .report {
         --report-font-size: 14px;
         --report-color: var(--color-on-surface);
-        --report-passed-color: 96, 85%, 43%;
+        --report-passed-color: var(--color-green);
         --report-failed-color: var(--color-error);
         --report-background-color: var(--color-surface);
         --report-container-padding: 16px;
@@ -32,7 +32,7 @@ export class HTMLReporter extends Reporter {
         --report-suite-title-weight: bold;
         --report-font-family: Roboto, sans-serif;
 
-        --report-test-passed-icon-color: 96, 85%, 43%;
+        --report-test-passed-icon-color: var(--color-green);
         --report-test-failed-icon-color: var(--color-error);
         --report-test-skipped-icon-color: 53, 91%, 47%;
         --report-test-icon-size: 14px;
@@ -48,13 +48,13 @@ export class HTMLReporter extends Reporter {
         --report-summary-title-weight: bold;
         --report-summary-result-weight: bold;
         --report-summary-result-color: var(--color-surface);
-        --report-summary-result-background-color: 96, 85%, 43%;
+        --report-summary-result-background-color: var(--color-green);
         --report-summary-result-padding: 5px;
 
         --report-summary-skipped-color: 53, 91%, 47%;
         --report-summary-skipped-weight: bold;
 
-        --report-summary-passed-color: 96, 85%, 43%;
+        --report-summary-passed-color: var(--color-green);
         --report-summary-passed-weight: bold;
 
         --report-summary-failed-color: var(--color-error);
@@ -74,12 +74,21 @@ export class HTMLReporter extends Reporter {
         background-color: hsl(var(--report-background-color));
       }
 
+      .color--red {
+        color: hsl(var(--color-error))
+      }
+
+      .color--green {
+        color: hsl(var(--color-green))
+      }
+
       .report[data-theme="dark"] {
         --color-on-surface: 240, 14%, 90%;
         --color-surface: 223, 17%, 8%;
         --color-error: 6, 100%, 75%;
         --color-on-error: 357, 100%, 21%;
         --color-gray: 0, 0%, 58%;
+        --color-green: 96, 85%, 43%;
       }
 
       .report[data-theme="light"] {
@@ -88,6 +97,7 @@ export class HTMLReporter extends Reporter {
         --color-error: 0, 80%, 45%;
         --color-on-error: 0, 0%, 100%;
         --color-gray: 0, 0%, 38%;
+        --color-green: 96, 85%, 43%;
       }
 
       .report__header {
@@ -157,6 +167,10 @@ export class HTMLReporter extends Reporter {
         color: hsl(var(--report-test-error-trace-color));
       }
 
+      .test .test__error-trace > span:first-child {
+        padding-right: 8px;
+      }
+
       .test .test__error > div {
         margin-bottom: 16px;
       }
@@ -181,8 +195,16 @@ export class HTMLReporter extends Reporter {
         fill: hsl(var(--report-test-skipped-icon-color));
       }
 
-      .test > div span:not(:last-child) {
+      .test > div:first-child span:not(:last-child) {
         padding-right: var(--report-test-items-padding-between);
+      }
+
+      .test .expected > span:not(:last-child) {
+        padding-right: 4px;
+      }
+
+      .test .expected .expected__value {
+        color: hsl(var(--color-green));
       }
 
       .suites > .suite, .suites > .test {
@@ -400,6 +422,24 @@ export class HTMLReporter extends Reporter {
     return `${report}${testReport}${describeReport}`;
   }
 
+  #getChain(matcherResult: MatcherResultInterface) {
+    let chain = '';
+
+    let currentContext: ExpectContext | null = matcherResult.context ?? null;
+
+    while (currentContext) {
+      const { name, type, parent } = currentContext;
+
+      chain = `${parent !== null ? '<span>.</span>' : ''}${type === 'expect' ? `<span >${name}</span>` : name}${type === 'matcher' ? '<span>(<span class="color--green">expected</span>)</span>' : type === 'expect' ? `<span>(<span class="color--red">recieved</span>)</span>` : ''}${chain}`;
+
+      currentContext = parent;
+    }
+
+    if (chain.length) return `<div class="chain">${chain}</div>`;
+
+    return chain;
+  }
+
   #handleError(error: any, suite: Suite, testCase?: TestCase) {
     let report = '<div class="test__error">';
     let errorMessage = '';
@@ -411,11 +451,11 @@ export class HTMLReporter extends Reporter {
 
       if (context && !context.parent) context.parent = { name: 'expect', type: 'expect', value: actual, parent: null };
 
-      chain = matcherResult.chain;
+      chain = this.#getChain(matcherResult);
 
       switch (context?.parent?.name) {
         case 'not':
-          errorMessage += `<div>}${this.#createExpectedMessage(expected, context?.parent?.name)}</div>`;
+          errorMessage += `<div>${this.#createExpectedMessage(expected, context?.parent?.name)}</div>`;
           break;
         default:
           errorMessage += `<div>${this.#createExpectedMessage(expected)}</div>`;
@@ -431,7 +471,7 @@ export class HTMLReporter extends Reporter {
 
     if (trace) report += `${trace}`;
 
-    if (chain) report += `<div>${chain}</div>`;
+    if (chain) report += `${chain}`;
 
     report += errorMessage;
 
@@ -454,21 +494,21 @@ export class HTMLReporter extends Reporter {
   }
 
   #createReceivedMessage(received: any) {
-    return `<div class="expected"><span>Received:</span> <span class="recieved__value">${received}"</span></div>`;
+    return `<div class="expected"><span>Received:</span><span class="recieved__value">${received}"</span></div>`;
   }
 
   #createExpectedMessage(expected: any, modifier?: string) {
-    return `<div class="expected"><span>Expected:${modifier ? ` ${modifier}` : ''}</span><span class="expected__value">"${expected}"</span></div>`;
+    return `<div class="expected"><span>Expected:</span>${modifier ? `<span class="modifier">${modifier}</span>` : ''}<span class="expected__value">${expected}</span></div>`;
   }
 
   #createTestMessage(name: string, durationString: string, passed: boolean) {
-    const icon = `<span class="icon">${passed ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>'}</span>`;
+    const icon = `<span class="icon">${passed ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M382-208 122-468l90-90 170 170 366-366 90 90-456 456Z"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m256-168-88-88 224-224-224-224 88-88 224 224 224-224 88 88-224 224 224 224-88 88-224-224-224 224Z"/></svg>'}</span>`;
 
     return `<div>${icon}<span class="test__title">${name}</span>${durationString ? `<span class="test__duration">(${durationString})</span>` : ''}</div>`;
   }
 
   #createSkippedMessage(name: string) {
-    return `<div><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></span><span class="test__title">Skipped: ${name}</span></div>`;
+    return `<div><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-46q-91 0-169.99-34.08-78.98-34.09-137.41-92.52-58.43-58.43-92.52-137.41Q46-389 46-480q0-91 34.08-169.99 34.09-78.98 92.52-137.41 58.43-58.43 137.41-92.52Q389-914 480-914q91 0 169.99 34.08 78.98 34.09 137.41 92.52 58.43 58.43 92.52 137.41Q914-571 914-480q0 91-34.08 169.99-34.09 78.98-92.52 137.41-58.43 58.43-137.41 92.52Q571-46 480-46Zm0-126q130 0 219-89t89-219q0-130-89-219t-219-89q-130 0-219 89t-89 219q0 130 89 219t219 89Zm0-308Z"/></svg></span><span class="test__title">Skipped: ${name}</span></div>`;
   }
 
   #createTrace(suite: Suite, testCase?: TestCase) {
@@ -478,7 +518,7 @@ export class HTMLReporter extends Reporter {
     if (testCase) trace.push(testCase.name);
 
     while (parentSuite) {
-      if (parentSuite.isRoot === false) trace.unshift(parentSuite.name);
+      if (parentSuite.isRoot === false) trace.unshift(`<span>${parentSuite.name}</span>`);
 
       parentSuite = parentSuite.parent;
     }
