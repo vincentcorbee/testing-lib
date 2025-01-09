@@ -1,11 +1,13 @@
 export class GraphQL {
   #ssoAccessToken;
   #ssoAccessTokenBackstage;
+  #ssoAccessTokenDebug;
   #graphqlEndpoint;
 
-  constructor({ graphqlEndpoint = '', ssoAccessTokenBackstage = '', ssoAccessToken = '' }) {
+  constructor({ graphqlEndpoint = '', ssoAccessTokenBackstage = '', ssoAccessToken = '', ssoAccessTokenDebug = '' }) {
     this.#ssoAccessToken = ssoAccessToken;
     this.#ssoAccessTokenBackstage = ssoAccessTokenBackstage;
+    this.#ssoAccessTokenDebug = ssoAccessTokenDebug;
     this.#graphqlEndpoint = graphqlEndpoint;
   }
 
@@ -15,6 +17,10 @@ export class GraphQL {
 
   set ssoAccessTokenBackstage(token) {
     this.#ssoAccessTokenBackstage = token;
+  }
+
+  set ssoAccessTokenDebug(token) {
+    this.#ssoAccessTokenDebug = token;
   }
 
   async #performGraphQLQuery(query, variables = {}, ssoAccessToken) {
@@ -81,6 +87,9 @@ export class GraphQL {
           identification(role: "prospective_member") {
             id
           }
+          rightsholder {
+            ipBaseNumber
+          }
         }
       }
     }`;
@@ -106,5 +115,45 @@ export class GraphQL {
     }`;
 
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
+  }
+
+  async setRegistrationDetailsValidated(registrationId) {
+    const query = `mutation($input: RegistrationStateInputType!) {
+      setRegistrationDetailsValidated(input: $input)
+    }`;
+
+    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
+  }
+
+  async setRightsholderApproved(registrationId) {
+    const query = `mutation($input: RegistrationStateInputType!) {
+      setRightsholderApproved(input: $input)
+    }`;
+
+    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
+  }
+
+  async getRegistrationAuthor(registrationId) {
+    const query = `query($input: GetRegistrationInputType!) {
+      getRegistrationAuthor(input: $input) {
+        shareholder {
+          ipBaseNumber
+        }
+      }
+    }`;
+
+    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
+  }
+
+  async getRegistration(registrationId) {
+    const query = `query($input: GetRegistrationInputType!) {
+      getRegistration(input: $input) {
+        shareholder {
+          ipBaseNumber
+        }
+      }
+    }`;
+
+    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessToken);
   }
 }

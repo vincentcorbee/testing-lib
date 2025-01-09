@@ -9,7 +9,7 @@
     "watch": "pnpm clean && tsc -w",
     "clean": "rm -rf dist",
     "package:patch": "pnpm version patch",
-    "server:start": "pnpm nodemon --exec node --loader ts-node/esm ./server/index.ts"
+    "start:server": "pnpm nodemon --exec node --loader ts-node/esm ./server/index.ts"
   },
   "keywords": [],
   "author": "",

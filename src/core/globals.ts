@@ -102,6 +102,9 @@ export const runner: Runner = {
   restoreAllMock() {
     testRunner.restoreAllMock();
   },
+  spyOn(object, methodName) {
+    return testRunner.spyOn(object, methodName);
+  },
   intercept(object, methodName, interceptor) {
     return testRunner.intercept(object, methodName, interceptor);
   },

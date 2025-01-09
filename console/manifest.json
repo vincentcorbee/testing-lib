@@ -8,5 +8,13 @@
   "background": {
     "service_worker": "background.js"
   },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "mac": "Command+Shift+E"
+      },
+      "description": "Start the extension"
+    }
+  },
   "action": {}
 }

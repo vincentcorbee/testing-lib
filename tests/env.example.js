@@ -9,6 +9,7 @@ const env = {
       password: '',
       application: '',
       sso_access_token: '',
+      refresh_token: '',
     },
   },
 };

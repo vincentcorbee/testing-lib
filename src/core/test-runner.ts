@@ -23,6 +23,8 @@ import {
   TestRunnerEvent,
 } from './types.js';
 
+const compareFn = (a: any, b: any) => a && b && (a === b || a.toString() === b.toString());
+
 export class TestRunner {
   #describeBlocks: DescribeBlock[];
   root: DescribeBlock;
@@ -119,7 +121,7 @@ export class TestRunner {
 
     if (listeners === undefined) {
       this.#listeners.set(event, [listener]);
-    } else if (listeners.every((fn) => fn !== listener)) {
+    } else if (listeners.every((fn) => !compareFn(fn, listener))) {
       listeners.push(listener);
     }
 
@@ -132,7 +134,7 @@ export class TestRunner {
     if (listeners)
       this.#listeners.set(
         event,
-        listeners.filter((fn) => fn !== listener),
+        listeners.filter((fn) => !compareFn(fn, listener)),
       );
 
     return this;
@@ -235,6 +237,14 @@ export class TestRunner {
     return mockFunction;
   }
 
+  spyOn(object: any, methodName: string): MockFunction {
+    const mockFunction = MockFunctionFactory(undefined, { object, methodName });
+
+    this.#mockFunctions.push(mockFunction);
+
+    return mockFunction;
+  }
+
   intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction {
     return MockFunctionFactory(interceptor, { object, methodName });
   }
@@ -303,6 +313,16 @@ export class TestRunner {
   }
 
   #reset() {
+    this.#reporters.forEach((reporter) => {
+      this.off('suite:begin', reporter.onSuiteBegin.bind(reporter));
+      this.off('suite:end', reporter.onSuiteEnd.bind(reporter));
+      this.off('test:begin', reporter.onTestBegin.bind(reporter));
+      this.off('test:end', reporter.onTestEnd.bind(reporter));
+      this.off('end', reporter.onEnd.bind(reporter));
+      this.off('begin', reporter.onBegin.bind(reporter));
+      this.off('error', reporter.onError.bind(reporter));
+    });
+
     this.#describeBlocks = [];
     this.root = this.currentDescribeBlock = TestRunner.#createDescribeBlock('', null, true);
     this.#shouldSkip = false;
@@ -310,6 +330,7 @@ export class TestRunner {
     this.#testRun = new TestRun(this.root.suite);
     this.#mockFunctions = [];
     this.#aborted = false;
+    this.#reporters = this.#getReporters();
   }
 
   #shouldRunTest({ only = false, skip = false }: TestBlock) {

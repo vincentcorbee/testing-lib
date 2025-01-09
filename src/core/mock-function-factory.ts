@@ -10,6 +10,9 @@ export function MockFunctionFactory(
   let contexts: any[] = [];
   let results: any[] = [];
 
+  let original: GenericFunction;
+  let mockFunction: MockFunction;
+
   const clear = () => {
     calls = [];
     contexts = [];
@@ -33,9 +36,6 @@ export function MockFunctionFactory(
 
     mockImplementation = noop;
   };
-
-  let original: GenericFunction;
-  let mockFunction: MockFunction;
 
   const handler: ProxyHandler<MockFunction> = {
     apply(target, thisArg, args) {

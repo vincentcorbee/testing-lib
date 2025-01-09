@@ -42,10 +42,10 @@ class FileExplorer extends HTMLElement {
       const minButton = createElement('button', { className: 'ui-file-explorer__min-button' });
       const link = createElement('link', {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=folder_open',
+        href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
       });
 
-      const onBegin = (suite) => {
+      const onBegin = (_suite) => {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
 
         this.#status = 'started';
@@ -59,6 +59,10 @@ class FileExplorer extends HTMLElement {
         const item = this.#tree.querySelector(`[data-name="${this.#test}"]`);
         const reporter = new HTMLReporter({
           onEnd: (report) => {
+            const currentDialog = document.getElementById('report-dialog');
+
+            if (currentDialog) currentDialog.remove();
+
             /* Append report to the DOM */
             const fragment = document.createDocumentFragment();
             const template = document.createElement('template');
@@ -72,7 +76,7 @@ class FileExplorer extends HTMLElement {
 
             const script = document.createElement('script');
 
-            script.textContent = reportScript.textContent;
+            script.textContent = `(() => { ${reportScript.textContent} })()`;
 
             const closeButton = createElement('button', {
               textContent: 'Sluiten',
@@ -82,6 +86,7 @@ class FileExplorer extends HTMLElement {
             const dialog = createElement(
               'dialog',
               {
+                id: 'report-dialog',
                 style: `
               border: none;
               padding: 0;

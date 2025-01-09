@@ -11,44 +11,50 @@ export function type(
   const { min = 50, max = 130 } = options;
 
   return waitForWithResolvers(async (resolve, reject) => {
-    const element =
-      typeof selectorOrElement === 'string'
-        ? await getBySelector<HTMLInputElement>(selectorOrElement)
-        : selectorOrElement;
+    if (value && value.length > 0) {
+      const element =
+        typeof selectorOrElement === 'string'
+          ? await getBySelector<HTMLInputElement>(selectorOrElement)
+          : selectorOrElement;
 
-    let index = 0;
-    let typed = '';
+      let index = 0;
+      let typed = '';
 
-    const interval = setInterval(
-      async () => {
-        try {
-          const codePoint = value.codePointAt(index)!;
-          const key = String.fromCodePoint(codePoint);
-          const code = getCode(key);
+      element.focus();
 
-          await fireEvent(element, 'keydown', { key, code });
+      const interval = setInterval(
+        async () => {
+          try {
+            const codePoint = value.codePointAt(index)!;
+            const key = String.fromCodePoint(codePoint);
+            const code = getCode(key);
 
-          typed += key;
+            await fireEvent(element, 'keydown', { key, code });
 
-          await fireEvent(element, 'input', { target: { value: typed } });
-          await fireEvent(element, 'keyup', { key, code });
+            typed += key;
 
-          index += key.length;
+            await fireEvent(element, 'input', { target: { value: typed } });
+            await fireEvent(element, 'keyup', { key, code });
 
-          if (index >= value.length) {
+            index += key.length;
+
+            if (index >= value.length) {
+              clearInterval(interval);
+
+              await fireEvent(element, 'change', { target: { value } });
+
+              resolve();
+            }
+          } catch (error) {
             clearInterval(interval);
 
-            await fireEvent(element, 'change', { target: { value } });
-
-            resolve();
+            reject(error);
           }
-        } catch (error) {
-          clearInterval(interval);
-
-          reject(error);
-        }
-      },
-      Math.max(Math.random() * max, min),
-    );
+        },
+        Math.max(Math.random() * max, min),
+      );
+    } else {
+      resolve();
+    }
   });
 }

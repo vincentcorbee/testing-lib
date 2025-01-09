@@ -110,6 +110,7 @@ export type FullResult = {
 export type Runner = {
   readonly mockFunction: (mockImplementation?: MockFunctionImplementation) => MockFunction;
   intercept(object: any, methodName: string, interceptor: Interceptor): MockFunction;
+  spyOn(object: any, methodName: string): MockFunction;
   clearAllMock(): void;
   resetAllMock(): void;
   restoreAllMock(): void;

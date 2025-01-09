@@ -1,4 +1,4 @@
-export const css = `
+export const css = /*css */ `
 .material-symbols-outlined {
   font-variation-settings:
   'FILL' 1,
@@ -43,7 +43,7 @@ export const css = `
 
 .ui-file-explorer__header {
   background-color: hsl(300, 3%, 13%);
-  padding: var(--ui-file-explorer-header-padding);\
+  padding: var(--ui-file-explorer-header-padding);
   display: flex;
   align-items: center;
 }
@@ -114,6 +114,9 @@ div[data-type="folder"][aria-expanded="false"] + ul {
 div[data-type="file"] > span:nth-child(2) {
   font-size: var(--ui-file-explorer-file-label-size);
   pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ui-file-explorer__container:not([data-status="idle"]) div[data-type="file"]:not([data-running="true"]) {

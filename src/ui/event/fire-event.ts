@@ -15,6 +15,7 @@ export function fireEvent(selectorOrElement: string | Element, eventType: string
         event = new MouseEvent(eventType, { bubbles: true, ...rest });
         break;
       case 'blur':
+      case 'focus':
         event = new FocusEvent(eventType, { bubbles: true, ...rest });
         break;
       case 'change':

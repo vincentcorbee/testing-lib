@@ -1,5 +1,6 @@
-import { event, expect, user, page, screen, request, waitFor } from '../../../dist/index.js';
+import { event, expect, user, page, screen, request } from '../../../dist/index.js';
 import { padNumber } from '../../utils/pad-number.js';
+import { waitForPageload } from '../helpers.js';
 
 export async function clickStartRegistrationAsAuthorCard() {
   await user.click('#authorCard');
@@ -18,14 +19,15 @@ export async function clickIdentificationSection() {
   await user.click('section:nth-child(2) button');
 }
 
-export async function clickOtherIdentificationCard() {
-  await user.click(await screen.getByText('Selecteren', { index: 1 }));
+export async function clickOtherIdentificationCard(index = 1) {
+  await user.click(await screen.getByText('Selecteren', { index }));
 }
 
 export async function fillInPersonalDetails(personalDetails) {
   await user.type('#firstName', personalDetails.firstName);
   await user.type('#firstNames', personalDetails.firstNames);
   await user.type('#lastName', personalDetails.lastName);
+  await user.type('#infix', personalDetails.infix);
   await user.type('#dateOfBirth', personalDetails.dateOfBirth);
   await user.selectOptions('#sex', personalDetails.sex);
   await user.type('#placeOfBirth', personalDetails.placeOfBirth);
@@ -47,23 +49,28 @@ export async function clickButton(name) {
   await user.click(await screen.getByRole('button', { name }));
 }
 
-export function createPersonalDetails() {
+export function createPersonalDetails(details = {}) {
   const birthdate = faker.date.birthdate({ min: 18, max: 65, mode: 'age' });
   const firstName = faker.person.firstName();
+  const lastNames = faker.person.lastName().split(' ');
+  const lastName = lastNames.pop();
+  const infix = lastNames.join(' ');
 
   return {
     firstName,
     firstNames: firstName,
-    lastName: faker.person.lastName(),
+    lastName,
     dateOfBirth: `${padNumber(birthdate.getDate())}-${padNumber(birthdate.getMonth() || 1)}-${birthdate.getFullYear()}`,
     sex: faker.person.sex()[0].toUpperCase(),
     placeOfBirth: faker.location.city(),
     countryOfBirth: 'NL',
     nationality: 'NL',
+    infix,
+    ...details,
   };
 }
 
-export function createContactDetails() {
+export function createContactDetails(details = {}) {
   return {
     zipCode: faker.location.zipCode(),
     houseNumber: faker.location.buildingNumber(),
@@ -72,13 +79,8 @@ export function createContactDetails() {
     country: 'NL',
     telephoneNumber: '+31 6 12 345 678',
     email: faker.internet.email(),
+    ...details,
   };
-}
-
-export async function waitForPageload() {
-  await screen.getByText('Bezig met laden...');
-
-  await waitFor(async () => await expect(screen.findByText('Bezig met laden...')).resolves.toEqual(null));
 }
 
 export async function startAuthorAsOwnerRegistration() {

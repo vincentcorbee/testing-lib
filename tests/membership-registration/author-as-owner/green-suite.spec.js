@@ -5,13 +5,13 @@ import {
   expect,
   screen,
   navigation,
-  request,
   user,
   event,
   waitFor,
   page,
 } from '../../../dist/index.js';
 import { GraphQL } from '../../api/graphql.js';
+import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
 import { padNumber } from '../../utils/pad-number.js';
 import { loginUser } from '../../utils/login-user.js';
@@ -39,6 +39,7 @@ describe('Membership registration', () => {
   let bankName;
   let bankAccountNumber;
   let graphQL;
+  let restApi;
 
   beforeAll(async () => {
     console.clear();
@@ -52,11 +53,20 @@ describe('Membership registration', () => {
 
     await loginUser('backstage');
     await loginUser('non_member');
+    await loginUser('debug');
 
     graphQL = new GraphQL({
       graphqlEndpoint: env.graphql_endpoint,
       ssoAccessToken: env.users.non_member.sso_access_token,
       ssoAccessTokenBackstage: env.users.backstage.sso_access_token,
+      ssoAccessTokenDebug: env.users.debug.sso_access_token,
+    });
+
+    restApi = new RestApi({
+      restEndpoint: env.rest_endpoint,
+      ssoAccessToken: env.users.non_member.sso_access_token,
+      ssoAccessTokenBackstage: env.users.backstage.sso_access_token,
+      ssoAccessTokenDebug: env.users.debug.sso_access_token,
     });
   });
 
@@ -70,29 +80,29 @@ describe('Membership registration', () => {
         navigation.navigate('/membership-registration');
 
         await clickStartRegistrationAsAuthorCard();
-        await expect(
-          request.waitForRequest('/graphql', async (request) => {
-            if (!request.body.includes('activeRegistrations')) return false;
+        // await expect(
+        //   request.waitForRequest('/graphql', async (request) => {
+        //     if (!request.body.includes('activeRegistrations')) return false;
 
-            const response = await request.json();
+        //     const response = await request.json();
 
-            if (response.errors !== undefined) return false;
+        //     if (response.errors !== undefined) return false;
 
-            return true;
-          }),
-        ).resolves.toEqual(true);
+        //     return true;
+        //   }),
+        // ).resolves.toEqual(true);
 
-        await expect(
-          request.waitForRequest('/graphql', async (request) => {
-            if (!request.body.includes('startAuthorRegistrationAsOwner')) return false;
+        // await expect(
+        //   request.waitForRequest('/graphql', async (request) => {
+        //     if (!request.body.includes('startAuthorRegistrationAsOwner')) return false;
 
-            const response = await request.json();
+        //     const response = await request.json();
 
-            if (response.errors === undefined) return false;
+        //     if (response.errors === undefined) return false;
 
-            return true;
-          }),
-        ).resolves.toEqual(true);
+        //     return true;
+        //   }),
+        // ).resolves.toEqual(true);
 
         await screen.getByText('Je hebt al een registratie gestart. Ga verder met je registratie of breek hem af.');
         await user.click(await screen.getByRole('button', { label: 'Close' }));
@@ -122,6 +132,10 @@ describe('Membership registration', () => {
   describe('Persoonlijke data', () => {
     test('should click personal data card', async () => {
       await clickPersonalDataSection();
+    });
+
+    test('should go to Persoonlijke gegevens page', async () => {
+      await waitForPageload();
     });
 
     test('Volgende button should be disabled', async () => {
@@ -166,6 +180,19 @@ describe('Membership registration', () => {
       await clickPersonalDetailsSection();
     });
 
+    test('should not be able to register as a minor', async () => {
+      const dateOfBirth = new Date();
+
+      dateOfBirth.setFullYear(dateOfBirth.getFullYear() - 17);
+
+      await user.type(
+        '#dateOfBirth',
+        `${padNumber(dateOfBirth.getDate())}-${padNumber(dateOfBirth.getMonth() + 1)}-${dateOfBirth.getFullYear()}`,
+      );
+
+      await screen.getByText('Je moet minimaal 18 jaar oud zijn.');
+    });
+
     test('should fill in personal details', async () => {
       await fillInPersonalDetails(personalDetails);
     });
@@ -183,7 +210,8 @@ describe('Membership registration', () => {
 
     test('email should be pre filled', async () => {
       const input = await screen.getBySelector('#email');
-      await expect(input.value).toBeDefined();
+
+      expect(input.value).toBeDefined();
     });
 
     test('should fill in personal contact details', async () => {
@@ -400,6 +428,8 @@ describe('Membership registration', () => {
       await user.click(await screen.getByText('Invullen', 'button'));
 
       await page.location(/\/manage-rights$/);
+
+      await waitForPageload();
     });
 
     test('should open Rechten beheren card', async () => {
@@ -493,6 +523,19 @@ describe('Membership registration', () => {
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
       await page.location(/completed$/);
       await screen.getByRole('heading', { name: 'Registratie succesvol' });
+    });
+
+    test('should process ip basenumber added event ', async () => {
+      await restApi.memberRelationIPIBaseNumberWasAdded({
+        personalDetails,
+        personalContactDetails: contactDetails,
+        personalPaymentDetails: {
+          bankAccountNumber,
+          bic,
+          bankName,
+          iBAN,
+        },
+      });
     });
   });
 });

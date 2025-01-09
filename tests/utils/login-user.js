@@ -17,9 +17,10 @@ export async function loginUser(username) {
     },
   });
 
-  const { token } = await response.json();
+  const { token, refreshToken } = await response.json();
 
   user.sso_access_token = token;
+  user.refresh_token = refreshToken;
 
   return token;
 }
