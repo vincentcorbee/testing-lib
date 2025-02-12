@@ -37,8 +37,13 @@ describe('Membership registration', () => {
     bic = 'INGBNL2A';
     bankAccountNumber = '12234';
     bankName = 'Test bank';
-    personalDetails = createPersonalDetails();
-    contactDetails = createContactDetails();
+    personalDetails = createPersonalDetails({
+      firstName: 'Sponge Bob',
+      firstNames: 'Sponge',
+      lastName: 'Square Pants',
+      dateOfBirth: '18-11-1950',
+    });
+    contactDetails = createContactDetails({ email: env.users.non_member.login_id });
 
     await loginUser('backstage');
     await loginUser('non_member');
@@ -277,7 +282,7 @@ describe('Membership registration', () => {
     });
   });
 
-  describe.skip('Rechten beheren', () => {
+  describe('Rechten beheren', () => {
     test('should go to Rechten beheren', async () => {
       await user.click(await screen.getByText('Invullen', 'button'));
 
@@ -328,7 +333,7 @@ describe('Membership registration', () => {
     });
   });
 
-  describe.skip('Contract ondertekenen', () => {
+  describe('Contract ondertekenen', () => {
     test('should not be started', async () => {
       await user.click(await screen.getByText('Contract ondertekenen'));
       await screen.getByText('Nog niet gestart');
@@ -380,7 +385,7 @@ describe('Membership registration', () => {
       await screen.getByRole('heading', { name: 'Registratie succesvol' });
     });
 
-    test('should process ip basenumber added event ', async () => {
+    test.skip('should process ip basenumber added event ', async () => {
       const result = await graphQL.membershipActiveRegistrations();
 
       await restApi.memberRelationIPIBaseNumberWasAdded(

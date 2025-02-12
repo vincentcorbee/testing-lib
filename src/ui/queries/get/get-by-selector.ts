@@ -4,13 +4,15 @@ import { verifyElementInDOM } from '../../utils.js';
 
 export function getBySelector<E extends Element = Element>(
   selector: string,
-  options: { container?: Document | HTMLElement; timeout?: number } = {},
+  options: { container?: Document | HTMLElement; timeout?: number; index?: number } = {},
 ): Promise<E> {
-  const { container = document, timeout = 1000 } = options;
+  const { container = document, timeout = 1000, index = 0 } = options;
 
   return waitFor<E>(
     async () => {
-      const element = container.querySelector(selector);
+      const elements = container.querySelectorAll(selector);
+
+      const element = elements[index];
 
       if (!element)
         throw new AssertionError({

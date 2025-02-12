@@ -154,8 +154,8 @@ describe('Membership registration author as other', () => {
     personalDetails = createPersonalDetails({
       firstName: 'Sponge Bob',
       firstNames: 'Sponge',
-      lastName: 'Bob',
-      dateOfBirth: '18-11-2000',
+      lastName: 'Bob Squarepants',
+      dateOfBirth: '18-11-1950',
     });
     contactDetails = createContactDetails({ email: 'vincent+newmember@gmail.com' });
 

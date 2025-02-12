@@ -1,6 +1,27 @@
-import { event, expect, user, page, screen, request } from '../../../dist/index.js';
+import { event, expect, user, page, screen, request, wait } from '../../../dist/index.js';
 import { padNumber } from '../../utils/pad-number.js';
 import { waitForPageload } from '../helpers.js';
+
+export async function pickDate(parent, date) {
+  const [day, month, year] = date.split('-');
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const delta = parseInt(month) - currentMonth;
+
+  await user.click(await screen.getByRole('button', { label: 'Choose date', container: parent }));
+  await user.click(await screen.getByRole('button', { label: 'calendar view is open, switch to year view' }));
+  await user.click(await screen.getByRole('button', { name: year }));
+
+  const nextButton = await screen.getByRole('button', { label: `${delta > 0 ? 'Next' : 'Previous'} month` });
+
+  for (let i = 0, l = Math.abs(delta); i < l; i++) {
+    await user.click(nextButton);
+  }
+
+  await wait(500);
+
+  await user.click(await screen.getByRole('button', { name: day }));
+}
 
 export async function clickStartRegistrationAsAuthorCard() {
   await user.click('#authorCard');
@@ -28,7 +49,8 @@ export async function fillInPersonalDetails(personalDetails) {
   await user.type('#firstNames', personalDetails.firstNames);
   await user.type('#lastName', personalDetails.lastName);
   await user.type('#infix', personalDetails.infix);
-  await user.type('#dateOfBirth', personalDetails.dateOfBirth);
+  // await user.input('#dateOfBirth', personalDetails.dateOfBirth);
+  await pickDate(await screen.getBySelector('#dateOfBirth'), personalDetails.dateOfBirth);
   await user.selectOptions('#sex', personalDetails.sex);
   await user.type('#placeOfBirth', personalDetails.placeOfBirth);
   await user.selectOptions('#countryOfBirth', personalDetails.countryOfBirth);

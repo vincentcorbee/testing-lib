@@ -31,6 +31,7 @@ export const css = /*css */ `
   font-family: 'Roboto', sans-serif;
   color: hsl(336, 9%, 89%);
   min-width: 240px;
+  flex:1;
 }
 
 .ui-file-explorer__container {

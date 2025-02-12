@@ -86,6 +86,11 @@ function resolves<T>(actual: Promise<T>, parent: ExpectContext) {
     toEqual: async (expected: any) => {
       toEqual(await actual, expected, context);
     },
+    get not() {
+      return async function () {
+        return not(await actual, context);
+      };
+    },
   };
 }
 
@@ -123,7 +128,7 @@ function toBeVisible<T extends HTMLElement>(actual: T, parent: ExpectContext) {
       if (visible) {
         throw new AssertionError({
           name: 'toBeVisible',
-          expected: 'hidden',
+          expected: 'visible',
           modifier: 'not',
           actual: 'visible',
           message: `Expected element not to be visible`,
@@ -131,7 +136,7 @@ function toBeVisible<T extends HTMLElement>(actual: T, parent: ExpectContext) {
           context: { name: 'toBeVisible', type: 'matcher', value: actual, parent },
         });
       }
-      break;
+      return;
     default:
       if (!visible) {
         throw new AssertionError({
@@ -143,17 +148,6 @@ function toBeVisible<T extends HTMLElement>(actual: T, parent: ExpectContext) {
           context: { name: 'toBeVisible', type: 'matcher', value: actual, parent },
         });
       }
-  }
-
-  if (!isElementVisble(actual)) {
-    throw new AssertionError({
-      name: 'toBeVisible',
-      expected: 'visible',
-      actual: 'hidden',
-      message: `Element is not visible`,
-      pass: false,
-      context: { name: 'toBeVisible', type: 'matcher', value: actual, parent },
-    });
   }
 }
 

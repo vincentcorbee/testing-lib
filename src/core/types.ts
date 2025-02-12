@@ -144,6 +144,8 @@ export type Matchers = {
   };
   readonly not: {
     readonly toEqual: (expected: any) => void;
+    readonly toBeDefined: () => void;
+    readonly toBeVisible: () => void;
   };
 };
 

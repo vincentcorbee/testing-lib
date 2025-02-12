@@ -31,6 +31,7 @@ async function main() {
 
     #root {
       min-width: 0;
+      flex: 3;
     }
     `,
   });

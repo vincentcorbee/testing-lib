@@ -9,18 +9,19 @@ export function fireEvent(selectorOrElement: string | Element, eventType: string
     let event: Event | MouseEvent | FocusEvent | KeyboardEvent | undefined;
 
     const { target, ...rest } = payload;
+    const eventInit = { bubbles: true, cancelable: true, ...rest };
 
     switch (eventType) {
       case 'click':
-        event = new MouseEvent(eventType, { bubbles: true, ...rest });
+        event = new MouseEvent(eventType, eventInit);
         break;
       case 'blur':
       case 'focus':
-        event = new FocusEvent(eventType, { bubbles: true, ...rest });
+        event = new FocusEvent(eventType, eventInit);
         break;
       case 'change':
       case 'input':
-        event = new Event(eventType, { bubbles: true, ...rest });
+        event = new Event(eventType, eventInit);
 
         if (target?.value !== undefined) {
           /* To trigger event in React */
@@ -35,7 +36,7 @@ export function fireEvent(selectorOrElement: string | Element, eventType: string
         break;
       case 'keyup':
       case 'keydown':
-        event = new KeyboardEvent(eventType, { bubbles: true, ...rest });
+        event = new KeyboardEvent(eventType, eventInit);
         break;
       default:
         break;

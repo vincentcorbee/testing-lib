@@ -1,4 +1,9 @@
 {
+  "backstage": {
+    "membership-registration": {
+      "sanity": "tests/backstage/membership-registration/sanity.spec.js"
+    }
+  },
   "membership-registration": {
     "author-as-other": {
       "happy-flow.prospective-member": "tests/membership-registration/author-as-other/happy-flow.prospective-member.spec.js",
