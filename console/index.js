@@ -27,6 +27,11 @@ async function main() {
     body {
       display: flex;
       flex-direction: row-reverse;
+      justify-content: flex-end;
+
+      > main {
+        flex: 1;
+      }
     }
 
     #root {

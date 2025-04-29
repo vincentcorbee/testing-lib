@@ -1,10 +1,8 @@
-import { beforeAll, describe, test, screen, user, page } from '../../../dist/index.js';
+import { beforeAll, describe, test, screen, user, page, getCookie } from '../../../dist/index.js';
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
 import { loginUser } from '../../utils/login-user.js';
-import { startAuthorAsManagerRegistration } from './helpers.js';
-import { waitForPageload } from '../helpers.js';
 
 describe('Membership registration author as other', () => {
   let restApi;
@@ -33,30 +31,21 @@ describe('Membership registration author as other', () => {
     });
   });
 
-  describe('Registratie starten als auteur', () => {
-    test('should start a registration', async () => {
-      await startAuthorAsManagerRegistration();
-    });
-  });
-
   describe('Contract ondertekenen', () => {
-    test('should not be started', async () => {
+    test.skip('should not be started', async () => {
       await user.click(await screen.getByText('Contract ondertekenen'));
       await screen.getByText('Nog niet gestart');
     });
 
-    test.only('should go to Contract tekenen', async () => {
+    test.skip('should go to Contract tekenen', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/\/sign-contract/);
-      await waitForPageload();
     });
 
     test.skip('should sign contract Buma', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
-      await waitForPageload();
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
       await page.location(/overview$/);
-      await waitForPageload();
     });
 
     test.skip('should see Contract tekenen details', async () => {
@@ -70,22 +59,20 @@ describe('Membership registration author as other', () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/sign-contract$/);
       await screen.getByRole('button', { name: 'Ondertekenen', disabled: true });
+      await user.click(await screen.getByRole('button', { name: 'Terug' }));
     });
 
-    test.skip('should show registration cancel button', async () => {
-      await user.click(await screen.getByRole('button', { name: 'Terug' }));
-      await waitForPageload();
+    test('should show registration cancel button', async () => {
       await screen.getByRole('button', { name: 'Registratie annuleren' });
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/sign-contract$/);
     });
 
-    test.skip('should sign contract Stemra', async () => {
+    test('should sign contract Stemra', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen', index: 1 }));
-      await waitForPageload();
     });
 
-    test.skip('should go to Registratie succesvol', async () => {
+    test('should go to Registratie succesvol', async () => {
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
       await page.location(/completed$/);
       await screen.getByRole('heading', { name: 'Registratie succesvol' });

@@ -1,9 +1,20 @@
-import { beforeAll, describe, test, expect, screen, user, event, page, navigation } from '../../../dist/index.js';
+import {
+  beforeAll,
+  describe,
+  test,
+  expect,
+  screen,
+  user,
+  event,
+  page,
+  navigation,
+  wait,
+  getCookie,
+} from '../../../dist/index.js';
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
-import { padNumber } from '../../utils/pad-number.js';
-import { loginUser } from '../../utils/login-user.js';
+import { padNumber, loginUser } from '../../utils/index.js';
 import {
   clickButton,
   createPersonalDetails,
@@ -15,132 +26,14 @@ import {
   clickIdentificationSection,
   clickOtherIdentificationCard,
 } from '../author-as-owner/helpers.js';
-import { startAuthorAsManagerRegistration } from './helpers.js';
-import { waitForPageload, getRegistrationIdFromPath } from '../helpers.js';
-
-/* Set Cookie: https://datatracker.ietf.org/doc/html/rfc6265 */
-
-const MAX_AGE_ATTRIBUTE = 'Max-Age';
-const EXPIRES_ATTRIBUTE = 'Expires';
-const DOMAIN_ATTRIBUTE = 'Domain';
-const PATH_ATTRIBUTE = 'Path';
-const SECURE_ATTRIBUTE = 'Secure';
-const HTTP_ONLY_ATTRIBUTE = 'HttpOnly';
-
-const KEY_VALUE_SEPARATOR = '=';
-const ATTRIBUTE_DELIMITER = ';';
-const WHITE_SPACE = ' ';
-
-const AttributesMap = new Map([
-  [EXPIRES_ATTRIBUTE.toLowerCase(), EXPIRES_ATTRIBUTE],
-  [MAX_AGE_ATTRIBUTE.toLowerCase(), MAX_AGE_ATTRIBUTE],
-  [DOMAIN_ATTRIBUTE.toLowerCase(), DOMAIN_ATTRIBUTE],
-  [PATH_ATTRIBUTE.toLowerCase(), PATH_ATTRIBUTE],
-  [SECURE_ATTRIBUTE.toLowerCase(), SECURE_ATTRIBUTE],
-  [HTTP_ONLY_ATTRIBUTE.toLocaleLowerCase(), HTTP_ONLY_ATTRIBUTE],
-]);
-
-const BooleanAttributes = new Set([SECURE_ATTRIBUTE, HTTP_ONLY_ATTRIBUTE]);
-
-function getAttributeValue(attributeName, value) {
-  switch (attributeName) {
-    case EXPIRES_ATTRIBUTE:
-      return value instanceof Date ? value.toUTCString() : new Date(value).toUTCString();
-    default:
-      return encodeURIComponent(value);
-  }
-}
-
-function createCookie(key, value = '') {
-  return `${key}${KEY_VALUE_SEPARATOR}${value}`;
-}
-
-function getCookie(...cookieNames) {
-  const cookies = {};
-
-  /*
-    document.cookie returns a list of key value pairs seperated by a semi colon.
-    It wil not return the attributes of the cookie. So the semi colon is not used to signify cookie attributes.
-  */
-  document.cookie.split(ATTRIBUTE_DELIMITER).forEach((cookie) => {
-    if (cookie.includes(KEY_VALUE_SEPARATOR)) {
-      const [key, value] = cookie.split(KEY_VALUE_SEPARATOR);
-
-      cookies[key.trim()] = decodeURIComponent(value.trim());
-    }
-  });
-
-  if (cookieNames.length === 0) return cookies;
-
-  const result = {};
-
-  for (const name of cookieNames) result[name] = cookies[name];
-
-  return result;
-}
-
-function createCookieAttribute(name, value) {
-  const attributeName = AttributesMap.get(name.toLowerCase());
-
-  if (attributeName === undefined) return null;
-
-  let cookieAttribute;
-
-  if (BooleanAttributes.has(attributeName)) {
-    cookieAttribute = attributeName;
-  } else {
-    cookieAttribute = createCookie(attributeName, getAttributeValue(attributeName, value));
-  }
-
-  return `${ATTRIBUTE_DELIMITER}${WHITE_SPACE}${cookieAttribute}`;
-}
-
-/* Note that the expires attribute value needs to be a UTCString see: https://datatracker.ietf.org/doc/html/rfc2616#section-3.3 */
-function addCookieAttributes(cookie, attributes) {
-  let result = cookie;
-
-  for (const [name, value] of Object.entries(attributes)) {
-    const cookieAttribute = createCookieAttribute(name, value);
-
-    if (cookieAttribute !== null) result += cookieAttribute;
-  }
-
-  return result;
-}
-
-/* Note, to remove a cookie, the Path and the Domain attribute must match with the existing cookie. */
-function removeCookie(cookie) {
-  const { key, attributes } = cookie;
-  const date = new Date();
-
-  /* The date has to be set in the past in order to remove the cookie */
-
-  date.setDate(date.getDate() - 1);
-
-  attributes.expires = date;
-
-  document.cookie = addCookieAttributes(createCookie(key), attributes);
-}
-
-function setCookie(...cookies) {
-  cookies.forEach((cookie) => {
-    const { key, value, attributes = {} } = cookie;
-
-    /* If the value is set to null, the cookie will be removed */
-    if (value === null) {
-      removeCookie({ key, attributes });
-    } else if (value !== undefined) {
-      document.cookie = addCookieAttributes(createCookie(key, encodeURIComponent(value)), attributes);
-    }
-  });
-}
+import { startAuthorAsOtherRegistration } from './helpers.js';
+import { getRegistrationIdFromPath } from '../helpers.js';
 
 describe('Membership registration author as other', () => {
   let personalDetails = {};
   let contactDetails = {};
   let iBAN;
   let citizenServiceNumber;
-  let bic;
   let bankName;
   let bankAccountNumber;
   let graphQL;
@@ -153,17 +46,16 @@ describe('Membership registration author as other', () => {
     citizenServiceNumber = '111222333';
     personalDetails = createPersonalDetails({
       firstName: 'Sponge Bob',
-      firstNames: 'Sponge',
-      lastName: 'Bob Squarepants',
+      firstNames: 'Sponge Bob',
+      lastName: 'Square Pants',
       dateOfBirth: '18-11-1950',
     });
-    contactDetails = createContactDetails({ email: 'vincent+newmember@gmail.com' });
+    contactDetails = createContactDetails({ email: env.users.new_member.login_id });
 
     const { 'sso-access-token': ssoAccessToken } = getCookie('sso-access-token');
 
     await loginUser('backstage');
     await loginUser('debug');
-    await loginUser('non_member');
 
     graphQL = new GraphQL({
       graphqlEndpoint: env.graphql_endpoint,
@@ -182,14 +74,13 @@ describe('Membership registration author as other', () => {
 
   describe('Registratie starten als auteur', () => {
     test('should start a registration', async () => {
-      await startAuthorAsManagerRegistration();
+      await startAuthorAsOtherRegistration();
     });
   });
 
   describe('Persoonlijke data', () => {
     test('should go to Persoonlijke gegevens page', async () => {
       await clickPersonalDataSection();
-      await waitForPageload();
     });
 
     test('Volgende button should be disabled', async () => {
@@ -232,7 +123,6 @@ describe('Membership registration author as other', () => {
 
     test('should go to Persoonsgegevens page', async () => {
       await clickPersonalDetailsSection();
-      await waitForPageload();
     });
 
     test('firstName should not be pre filled', async () => {
@@ -275,7 +165,6 @@ describe('Membership registration author as other', () => {
 
     test('should go to Contact gegevens page', async () => {
       await page.location(/\/contact-details$/);
-      await waitForPageload();
     });
 
     test('email should not be pre filled', async () => {
@@ -294,15 +183,16 @@ describe('Membership registration author as other', () => {
 
     test('should go to Rekeninggegevens page', async () => {
       await page.location(/\/account-information$/);
-      await waitForPageload();
     });
 
     test('should fill in personal payment details IBAN', async () => {
       const input = await screen.getBySelector('#iban');
+      const checkbox = await screen.getBySelector('#confirmIban');
 
       await user.type(input, iBAN);
       await event.blur(input);
-      await user.click(await screen.getBySelector('#confirmIban'));
+      await user.click(checkbox);
+      await event.blur(checkbox);
     });
 
     test('should save personal payment details', async () => {
@@ -311,13 +201,11 @@ describe('Membership registration author as other', () => {
 
     test('should go to Persoonlijke data page', async () => {
       await page.location(/\/personal-data$/);
-      await waitForPageload();
     });
 
     test('should go to Start je registratie page', async () => {
       await clickButton('Volgende');
       await page.location(/\/overview$/);
-      await waitForPageload();
     });
 
     test('should see Persoonlijke gegevens', async () => {
@@ -343,13 +231,11 @@ describe('Membership registration author as other', () => {
     test('should go to identification overview page', async () => {
       await clickIdentificationSection();
       await page.location(/\/identification$/);
-      await waitForPageload();
     });
 
     test('should go to identification form page', async () => {
       await user.click(await screen.getByText('Invullen', 'button'));
       await page.location(/\/identification\/form$/);
-      await waitForPageload();
     });
 
     test('Identificeren met iDIN should should not be visible', async () => {
@@ -368,24 +254,19 @@ describe('Membership registration author as other', () => {
       test('should send identification', async () => {
         await user.click(await screen.getByText('Verstuur document', 'button'));
         await page.location(/\/identification$/);
-        await waitForPageload();
         await screen.getByRole('button', { name: 'In behandeling', disabled: true });
       });
 
       test('should approve identification by backstage', async () => {
-        const { data } = await graphQL.membershipActiveRegistrations();
-        const [registration] = data.membershipActiveRegistrations;
+        const registrationId = getRegistrationIdFromPath(location.pathname);
+        const {
+          data: {
+            membershipRegistrationById: { identification },
+          },
+        } = await graphQL.getRegistration(registrationId);
+        const result = await graphQL.approveIdentificationByIdentificationDocument(identification.id);
 
-        const fetch = () =>
-          new Promise(async (resolve) => {
-            const result = await graphQL.approveIdentificationByIdentificationDocument(registration.identification.id);
-
-            setTimeout(async () => {
-              resolve(result.data);
-            }, 3000);
-          });
-
-        const result = await fetch();
+        await wait(3000);
 
         expect(result).toBeDefined();
       });
@@ -394,7 +275,6 @@ describe('Membership registration author as other', () => {
     test('should go back to overview page', async () => {
       await user.click(await screen.getByText('Terug', 'button'));
       await page.location(/\/overview$/);
-      await waitForPageload();
       await screen.getByRole('button', { name: 'Afgerond', disabled: true });
     });
 
@@ -412,11 +292,16 @@ describe('Membership registration author as other', () => {
 
   describe('Rechten beheren', () => {
     test('should go to Rechten beheren', async () => {
+      if (await screen.findByRole('button', { name: 'Geblokkeerd' })) {
+        const registrationId = getRegistrationIdFromPath(location.pathname);
+
+        await graphQL.setRightsholderAsNew(registrationId);
+
+        navigation.reload(`/membership-registration`);
+      }
+
       await user.click(await screen.getByText('Invullen', 'button'));
-
       await page.location(/\/manage-rights$/);
-
-      await waitForPageload();
     });
 
     test('should open Rechten beheren card', async () => {
@@ -429,7 +314,6 @@ describe('Membership registration author as other', () => {
     test('should go to Rechten beheren form', async () => {
       await user.click(await screen.getByText('Invullen', 'button'));
       await page.location(/\/manage-rights\/form$/);
-      await waitForPageload();
     });
 
     test('should save selected rights', async () => {
@@ -442,7 +326,6 @@ describe('Membership registration author as other', () => {
       await screen.getByText('Bevestig je gegevens');
       await clickButton('Ga verder');
       await page.location(/\/overview$/);
-      await waitForPageload();
     });
 
     test('should see Rechten beheren details', async () => {
@@ -453,7 +336,7 @@ describe('Membership registration author as other', () => {
       await screen.getByText('Mechanisch');
       await screen.getByText('Online mechanisch');
       await screen.getByText('Online uitvoerend');
-      await screen.getByText('RTV en simulcasting');
+      await screen.getByText('Radio, Televisie en Simulcasting');
 
       const world = await screen.getAllByText('Wereld');
 
@@ -500,15 +383,12 @@ describe('Membership registration author as other', () => {
 
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/\/sign-contract/);
-      await waitForPageload();
     });
 
     test.skip('should sign contract Buma', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
-      await waitForPageload();
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
       await page.location(/overview$/);
-      await waitForPageload();
     });
 
     test.skip('should see Contract tekenen details', async () => {
@@ -526,7 +406,6 @@ describe('Membership registration author as other', () => {
 
     test.skip('should show registration cancel button', async () => {
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
-      await waitForPageload();
       await screen.getByRole('button', { name: 'Registratie annuleren' });
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/sign-contract$/);
@@ -534,7 +413,6 @@ describe('Membership registration author as other', () => {
 
     test.skip('should sign contract Stemra', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen', index: 1 }));
-      await waitForPageload();
     });
 
     test.skip('should go to Registratie succesvol', async () => {
@@ -552,7 +430,6 @@ describe('Membership registration author as other', () => {
           personalContactDetails: contactDetails,
           personalPaymentDetails: {
             bankAccountNumber,
-            bic,
             bankName,
             iBAN,
           },

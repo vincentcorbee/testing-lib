@@ -39,7 +39,10 @@ class FileExplorer extends HTMLElement {
         textContent: 'e2e tests',
       });
       const buttons = createElement('div', { className: 'ui-file-explorer__buttons' });
-      const minButton = createElement('button', { className: 'ui-file-explorer__min-button' });
+      const minButton = createElement('button', {
+        className: 'ui-file-explorer__min-button',
+        dataset: { action: 'min' },
+      });
       const link = createElement('link', {
         rel: 'stylesheet',
         href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
@@ -146,6 +149,14 @@ class FileExplorer extends HTMLElement {
               window.runner.abort();
             }
           }
+        } else {
+          const action = target?.dataset.action;
+
+          if (action === 'min') {
+            this.dataset.minimized = this.dataset.minimized === 'true' ? 'false' : 'true';
+          }
+
+          console.log(action);
         }
       };
 
@@ -208,26 +219,29 @@ class FileExplorer extends HTMLElement {
     return this.shadowRoot.querySelector('.ui-file-explorer__content > ul');
   }
 
-  #createList(tests) {
-    const list = document.createElement('ul');
+  #createList(tests, start = 0) {
+    const list = createElement('ul');
+    let index = start;
 
     Object.entries(tests).forEach(([key, val]) => {
-      const item = document.createElement('li');
+      index++;
+
+      const item = createElement('li');
+      const even = index !== 0 && index % 2 === 0;
 
       if (typeof val === 'string') {
         const button = createElement('span', { textContent: key });
         const icon = createElement('span', { className: 'material-symbols-outlined', textContent: 'description' });
-        const container = createElement('div', { dataset: { type: 'file', name: val } });
+        const container = createElement('div', { dataset: { type: 'file', name: val, even } });
 
         append(list, append(item, append(container, icon, button)));
       } else {
         const label = createElement('span', { textContent: key });
         const icon = createElement('span', { className: 'material-symbols-outlined', textContent: 'folder_open' });
-        const container = createElement('div', { dataset: { type: 'folder', name: key }, ariaExpanded: true });
+        const container = createElement('div', { dataset: { type: 'folder', name: key, even }, ariaExpanded: true });
 
         append(list, append(item, append(container, icon, label)));
-
-        append(item, this.#createList(val));
+        append(item, this.#createList(val, index));
       }
     });
 

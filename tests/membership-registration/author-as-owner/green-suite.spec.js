@@ -13,8 +13,7 @@ import {
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
-import { padNumber } from '../../utils/pad-number.js';
-import { loginUser } from '../../utils/login-user.js';
+import { padNumber, loginUser } from '../../utils/index.js';
 import {
   clickButton,
   clickStartRegistrationAsAuthorCard,
@@ -80,35 +79,10 @@ describe('Membership registration', () => {
         navigation.navigate('/membership-registration');
 
         await clickStartRegistrationAsAuthorCard();
-        // await expect(
-        //   request.waitForRequest('/graphql', async (request) => {
-        //     if (!request.body.includes('activeRegistrations')) return false;
-
-        //     const response = await request.json();
-
-        //     if (response.errors !== undefined) return false;
-
-        //     return true;
-        //   }),
-        // ).resolves.toEqual(true);
-
-        // await expect(
-        //   request.waitForRequest('/graphql', async (request) => {
-        //     if (!request.body.includes('startAuthorRegistrationAsOwner')) return false;
-
-        //     const response = await request.json();
-
-        //     if (response.errors === undefined) return false;
-
-        //     return true;
-        //   }),
-        // ).resolves.toEqual(true);
-
         await screen.getByText('Je hebt al een registratie gestart. Ga verder met je registratie of breek hem af.');
         await user.click(await screen.getByRole('button', { label: 'Close' }));
         await user.click(await screen.getByText(`Onbekend`));
         await page.location(/overview$/);
-        await waitForPageload();
         await screen.getByRole('heading', { name: 'Start je registratie' });
       });
     });
@@ -466,7 +440,7 @@ describe('Membership registration', () => {
       await screen.getByText('Mechanisch');
       await screen.getByText('Online mechanisch');
       await screen.getByText('Online uitvoerend');
-      await screen.getByText('RTV en simulcasting');
+      await screen.getByText('Radio, Televisie en Simulcasting');
 
       const world = await screen.getAllByText('Wereld');
 

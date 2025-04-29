@@ -18,6 +18,8 @@ import {
 } from './types.js';
 import { env } from '../shared/env.js';
 import { getFaker } from '../shared/get-faker.js';
+import { navigationBrowser } from './navigation/navigation.browser.js';
+import { navigationNode } from './navigation/navigation.node.js';
 
 export const testRunner = new TestRunner();
 
@@ -135,39 +137,7 @@ if (env === 'browser') {
   testRunner.intercept(XMLHttpRequest.prototype, 'send', xmlHttpRequestSendInterceptor);
   testRunner.intercept(history, 'pushState', historyPushStateInterceptor);
 
-  globalThis.__navigation__ = globalThis.__navigation__ ?? {
-    navigate(path: string | URL): void {
-      history.pushState({}, '', path);
-    },
-    back() {
-      history.back();
-    },
-    forward() {
-      history.forward();
-    },
-    go(n?: number) {
-      history.go(n);
-    },
-    reload(path: string | URL = '/') {
-      const currentPath = this.location.pathname;
-
-      history.pushState({}, '', path);
-
-      setTimeout(() => history.pushState({}, '', currentPath));
-    },
-    get location() {
-      return location.pathname;
-    },
-  };
+  globalThis.__navigation__ = globalThis.__navigation__ ?? navigationBrowser;
 } else {
-  globalThis.__navigation__ = globalThis.__navigation__ ?? {
-    navigate() {},
-    back() {},
-    forward() {},
-    go() {},
-    reload() {},
-    get location() {
-      return '';
-    },
-  };
+  globalThis.__navigation__ = globalThis.__navigation__ ?? navigationNode;
 }

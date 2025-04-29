@@ -2,7 +2,6 @@ import { expect, screen, waitFor } from '../../dist/index.js';
 
 export async function waitForPageload() {
   await screen.getByText('Bezig met laden...');
-
   await waitFor(async () => await expect(screen.findByText('Bezig met laden...')).resolves.toEqual(null));
 }
 

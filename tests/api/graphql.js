@@ -43,15 +43,15 @@ export class GraphQL {
       blockIdentificationByIdentificationDocument(input: $input) {
         id
         state
-        ... on AuthorRegistrationObjectType {
-          identification(role: "prospective_member") {
-            firstNames
-            lastName
-            state
-            mode
-            dateCreated
-          }
+
+        identification {
+          firstNames
+          lastName
+          state
+          mode
+          dateCreated
         }
+
       }
     }`;
 
@@ -63,15 +63,15 @@ export class GraphQL {
       approveIdentificationByIdentificationDocument(input: $input) {
         id
         state
-        ... on AuthorRegistrationObjectType {
-          identification(role: "prospective_member") {
-            firstNames
-            lastName
-            state
-            mode
-            dateCreated
-          }
+
+        identification {
+          firstNames
+          lastName
+          state
+          mode
+          dateCreated
         }
+
       }
     }`;
 
@@ -83,10 +83,10 @@ export class GraphQL {
       membershipActiveRegistrations {
         state
         id
+        identification {
+          id
+        }
         ... on AuthorRegistrationObjectType {
-          identification(role: "prospective_member") {
-            id
-          }
           rightsholder {
             ipBaseNumber
           }
@@ -133,11 +133,25 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
   }
 
+  async setRightsholderAsNew(registrationId) {
+    const query = `mutation($input: RightsholderDetailsInputType!) {
+      setRightsholderAsNew(input: $input) {
+        state
+      }
+    }`;
+
+    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
+  }
+
   async getRegistrationAuthor(registrationId) {
     const query = `query($input: GetRegistrationInputType!) {
       getRegistrationAuthor(input: $input) {
         shareholder {
           ipBaseNumber
+        }
+
+        identification {
+          id
         }
       }
     }`;
@@ -146,14 +160,14 @@ export class GraphQL {
   }
 
   async getRegistration(registrationId) {
-    const query = `query($input: GetRegistrationInputType!) {
-      getRegistration(input: $input) {
-        shareholder {
-          ipBaseNumber
+    const query = `query getRegistration($input: RegistrationGetInputType!) {
+      membershipRegistrationById(input: $input) {
+        identification {
+          id
         }
       }
     }`;
 
-    return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessToken);
+    return this.#performGraphQLQuery(query, { input: { id: registrationId } }, this.#ssoAccessToken);
   }
 }

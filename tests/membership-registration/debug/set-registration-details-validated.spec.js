@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, navigation } from '../../../dist/index.js';
-import { loginUser } from '../../utils/login-user.js';
+import { loginUser } from '../../utils/index.js';
 import { GraphQL } from '../../api/graphql.js';
 
 import { env } from '../../env.js';

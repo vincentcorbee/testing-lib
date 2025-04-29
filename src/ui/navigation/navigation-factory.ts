@@ -25,7 +25,7 @@ export function navigationFactory(history: History) {
     go(n?: number) {
       return history.go(n);
     },
-    reload(path: string | URL = '/') {
+    reload(path?: string | URL) {
       history.reload(path);
     },
     waitForNavigation,
