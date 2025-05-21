@@ -6,6 +6,7 @@ export * as request from './request/index.js';
 export * as user from './user/index.js';
 export * as queries from './queries/index.js';
 export * as page from './page/index.js';
+export * as keyboard from './keyboard/index.js';
 export { waitFor } from '../shared/wait-for.js';
 export { wait } from '../shared/wait.js';
 

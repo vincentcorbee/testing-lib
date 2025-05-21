@@ -24,19 +24,10 @@ export async function clickOtherIdentificationCard(index = 1) {
 }
 
 export async function fillInCompanyDetails(companyDetails) {
-  await user.type('#chamberOfCommerceNumber', companyDetails.chamberOfCommerceNumber);
-  await user.type('#name', companyDetails.name);
-  await pickDate(await screen.getBySelector('#dateOfIncorporation'), companyDetails.dateOfIncorporation);
-  await user.selectOptions('#legalForm', companyDetails.legalForm);
-  await user.type('#zipCode', companyDetails.zipcode);
-  await user.type('#houseNumber', companyDetails.houseNumber);
-  await user.type('#houseNumberAddition', companyDetails.houseNumberAddition);
-  await user.type('#street', companyDetails.street);
-  await user.type('#city', companyDetails.city);
-  await user.selectOptions('#country', companyDetails.country);
-  await user.type('#vatNumber', companyDetails.vatNumber);
-  await user.type('[name="telephoneNumber"]', companyDetails.phoneNumber);
-  await user.type('#email', companyDetails.email);
+  // await pickDate(await screen.getBySelector('#dateOfIncorporation'), companyDetails.dateOfIncorporation);
+  // await user.type('#vatNumber', companyDetails.vatNumber);
+  // await user.type('[name="telephoneNumber"]', companyDetails.phoneNumber);
+  // await user.type('#email', companyDetails.email);
 }
 
 export async function clickButton(name) {
@@ -58,20 +49,27 @@ export function createCompanyDetails(details = {}) {
     street: faker.location.street(),
     city: faker.location.city(),
     country: 'NL',
-    vatNumber: faker.string.numeric(8),
+    vatNumber: 'NL123456789B01',
     phoneNumber: '+31 6 12 345 678',
     email: faker.internet.email(),
+    rsin: '12345678',
     ...details,
   };
 }
 
 export function createContactDetails(details = {}) {
+  const birthdate = faker.date.birthdate({ min: 18, max: 65, mode: 'age' });
+  const firstName = faker.person.firstName();
+  const lastNames = faker.person.lastName().split(' ');
+  const lastName = lastNames.pop();
+  const infix = lastNames.join(' ');
+
   return {
-    zipCode: faker.location.zipCode(),
-    houseNumber: faker.location.buildingNumber(),
-    street: faker.location.street(),
-    city: faker.location.city(),
-    country: 'NL',
+    firstName,
+    lastName,
+    dateOfBirth: `${padNumber(birthdate.getDate())}-${padNumber(birthdate.getMonth() || 1)}-${birthdate.getFullYear()}`,
+    sex: faker.person.sex()[0].toUpperCase(),
+    infix,
     telephoneNumber: '+31 6 12 345 678',
     email: faker.internet.email(),
     ...details,

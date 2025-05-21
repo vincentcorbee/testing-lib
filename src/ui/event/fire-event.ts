@@ -2,7 +2,11 @@ import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
 import { getBySelector } from '../queries/get/get-by-selector.js';
 import { verifyElementInDOM } from '../utils.js';
 
-export function fireEvent(selectorOrElement: string | Element, eventType: string, payload: any = {}) {
+export function fireEvent(
+  selectorOrElement: string | Element | Window | Document,
+  eventType: string,
+  payload: any = {},
+) {
   return waitForWithResolvers(async (resolve, reject) => {
     const element = typeof selectorOrElement === 'string' ? await getBySelector(selectorOrElement) : selectorOrElement;
 
@@ -44,7 +48,7 @@ export function fireEvent(selectorOrElement: string | Element, eventType: string
 
     if (!event) reject(Error(`Unsupported event ${eventType}`));
     else {
-      await verifyElementInDOM(element, { query: 'fireEvent' });
+      if (element instanceof Element) await verifyElementInDOM(element, { query: 'fireEvent' });
 
       element.addEventListener(eventType, () => resolve(), { once: true });
 

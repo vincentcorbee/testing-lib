@@ -40,8 +40,6 @@ describe('Membership registration', () => {
 
     iBAN = 'NL69INGB0123456789';
     citizenServiceNumber = '111222333';
-    bankAccountNumber = '12234';
-    bankName = 'Test bank';
     personalDetails = createPersonalDetails({
       firstName: 'Sponge Bob',
       firstNames: 'Sponge Bob',

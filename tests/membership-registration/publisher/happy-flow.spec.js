@@ -1,11 +1,12 @@
-import { beforeAll, describe, test, screen, user } from '../../../dist/index.js';
+import { beforeAll, describe, test, screen, user, wait, keyboard, event, page, request } from '../../../dist/index.js';
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
-import { loginUser } from '../../utils/index.js';
+import { loginUser, padNumber, pickDate } from '../../utils/index.js';
 import {
   clickButton,
   createCompanyDetails,
+  createContactDetails,
   startPublisherAsOwnerRegistration,
   clickCompanyDataSection,
   clickCompanyDetailsSection,
@@ -13,16 +14,27 @@ import {
 } from './helpers.js';
 
 describe('Membership registration publisher', () => {
-  let CompanyDetails = {};
-  let rsin;
+  let companyDetails = {};
+  let contactDetails = {};
   let graphQL;
   let restApi;
+  let iBAN;
+  let bankAccountNumber;
+  let bankName;
+  let bic;
 
   beforeAll(async () => {
     console.clear();
 
-    CompanyDetails = createCompanyDetails({});
-    rsin = '12345678';
+    companyDetails = createCompanyDetails({
+      name: 'Universal International Music',
+      chamberOfCommerceNumber: '31018439',
+    });
+    contactDetails = createContactDetails();
+    iBAN = 'NL69INGB0123456789';
+    bankAccountNumber = '12234';
+    bankName = 'ing';
+    bic = 'INGBNL2A';
 
     await loginUser('backstage');
     await loginUser('non_member');
@@ -54,7 +66,14 @@ describe('Membership registration publisher', () => {
       await clickCompanyDataSection();
     });
 
-    test.skip('Volgende button should be disabled', async () => {
+    test('should see the different sections', async () => {
+      await screen.getByRole('heading', { name: 'Bedrijfsgegevens', level: 2 });
+      await screen.getByRole('heading', { name: 'Rekeninggegevens', level: 2 });
+      await screen.getByRole('heading', { name: 'Contactgegevens', level: 2 });
+      await screen.getByRole('heading', { name: 'Ondertekenaars', level: 2 });
+    });
+
+    test('Volgende button should be disabled', async () => {
       await screen.getByRole('button', { name: 'Volgende', disabled: true });
     });
 
@@ -64,29 +83,143 @@ describe('Membership registration publisher', () => {
       await screen.isVisible(await screen.getByText('Bedrijfsnaam'));
     });
 
-    test('should go to Bedrijfssgegevens page', async () => {
-      await clickCompanyDetailsSection();
+    describe('company details', () => {
+      test('should go to Bedrijfssgegevens page', async () => {
+        await clickCompanyDetailsSection();
+      });
+
+      test('should search company info', async () => {
+        const input = await screen.getBySelector('#company-info-search-field');
+
+        await user.type(input, companyDetails.name);
+        await wait(2000);
+        await keyboard.press('ArrowDown', { target: input });
+        await keyboard.press('Enter', { target: input });
+        await request.waitForRequest('/graphql', async (request) => {
+          const {
+            data: { companyInfoDetails },
+          } = JSON.parse(await request.response.text());
+
+          companyDetails.name = companyInfoDetails.tradeNameFull;
+          companyDetails.chamberOfCommerceNumber = companyInfoDetails.dossierNumber;
+          companyDetails.dateOfIncorporation = companyInfoDetails.foundingDate;
+          companyDetails.legalForm = companyInfoDetails.legalFormCode;
+          companyDetails.zipcode = companyInfoDetails.postcode;
+          companyDetails.houseNumber = companyInfoDetails.houseNumber.toString();
+          companyDetails.houseNumberAddition = companyInfoDetails.houseNumberAddition;
+          companyDetails.street = companyInfoDetails.street;
+          companyDetails.city = companyInfoDetails.city;
+          companyDetails.country = 'NL';
+          companyDetails.vatNumber = companyInfoDetails.vatNumber;
+          companyDetails.rsin = companyInfoDetails.rsinNumber;
+        });
+        await wait(2000);
+      });
+
+      test('should fill in company details', async () => {
+        await fillInCompanyDetails(companyDetails);
+      });
+
+      test('should show RSIN input when RSIN is Ja', async () => {
+        await user.click(await screen.getByText('Ja'));
+        await screen.getBySelector('#rsin');
+      });
+
+      test('should fill in RSIN service number', async () => {
+        await user.click(await screen.getByText('Ja'));
+
+        const input = await screen.getBySelector('#rsin');
+
+        await user.type(input, companyDetails.rsin);
+      });
+
+      test('should save company details', async () => {
+        await clickButton('Opslaan');
+      });
+
+      test('should go to Rekeninggegevens page', async () => {
+        await page.location(/\/account-details$/);
+      });
     });
 
-    test.only('should fill in company details', async () => {
-      await fillInCompanyDetails(CompanyDetails);
+    describe('account details', () => {
+      test('should fill in bank account', async () => {
+        await user.click(await screen.getByText('Ik heb geen IBAN rekeningnummer'));
+
+        const inputBankAccountNumber = await screen.getBySelector('#bankAccountNumber');
+        const inputBankName = await screen.getBySelector('#bankName');
+        const inputBic = await screen.getBySelector('#bic');
+
+        await user.type(inputBankAccountNumber, bankAccountNumber);
+        await user.type(inputBankName, bankName);
+        await user.type(inputBic, bic);
+        await user.upload('#bankStatement-input', new File(['Hello'], 'my-file.png', { type: 'image/png' }));
+      });
+
+      test('should fill in IBAN', async () => {
+        await user.click(await screen.getByText('IBAN rekeningnummer'));
+
+        const input = await screen.getBySelector('#iban');
+        const checkbox = await screen.getBySelector('#ibanConfirmed');
+
+        await user.type(input, iBAN);
+        await event.blur(input);
+        await user.click(checkbox);
+        await event.blur(checkbox);
+      });
+
+      test('should save account details', async () => {
+        await clickButton('Opslaan');
+      });
+
+      test('should go to Contactgegevens page', async () => {
+        await page.location(/\/contact-details$/);
+      });
     });
 
-    test('should disable Opslaan knop when RSIN is Ja', async () => {
-      await user.click(await screen.getByText('Ja'));
-      await screen.getByRole('button', { name: 'Opslaan', disabled: true });
+    describe('contact details', () => {
+      test('should fill contact details', async () => {
+        await user.selectOptions('#sex', contactDetails.sex);
+        await user.type('#firstName', contactDetails.firstName);
+        await user.type('#infix', contactDetails.infix);
+        await user.type('#lastName', contactDetails.lastName);
+        await user.type('input[name=telephoneNumber]', contactDetails.telephoneNumber);
+        await user.type('#email', contactDetails.email);
+        await pickDate(await screen.getBySelector('#dateOfBirth'), contactDetails.dateOfBirth);
+      });
+
+      test('should save contact details', async () => {
+        await clickButton('Opslaan');
+      });
+
+      test('should go to Ondertekenaars page', async () => {
+        await page.location(/\/signers$/);
+      });
     });
 
-    test('should fill in RSIN service number', async () => {
-      await user.click(await screen.getByText('Ja'));
-
-      const input = await screen.getBySelector('#rsin');
-
-      await user.type(input, rsin);
+    describe('signers', () => {
+      test('should go to Bedrijfsgegevens page', async () => {
+        await page.location(/\/company-data$/);
+      });
     });
 
-    test.skip('should save company details', async () => {
-      await clickButton('Opslaan');
+    test('should see Bedrijfsgegevens', async () => {
+      await user.click(await screen.getByRole('heading', { name: 'Bedrijfsgegevens', level: 2 }));
+
+      for (const [key, value] of Object.entries(companyDetails)) {
+        let v = value;
+
+        if (key === 'dateOfIncorporation') v = value.split('-').map(padNumber).join('/');
+
+        if (key === 'zipcode') v = value.replace(/(\d{4})(\w{2})/, '$1 $2');
+
+        await screen.getByText(v);
+      }
+    });
+
+    test('should see Rekeninggegevens', async () => {
+      await user.click(await screen.getByRole('heading', { name: 'Rekeninggegevens', level: 2 }));
+      await screen.getByText(iBAN);
     });
   });
 });

@@ -4,6 +4,13 @@ import { verifyElementInDOM } from '../../utils.js';
 
 const ignoreTags = '[not(self::body or self::style or self::script)]';
 
+const sanitizeText = (text: string) => {
+  if (text.includes("'")) return `"${text}"`;
+  if (text.includes('"')) return `'${text}'`;
+
+  return `'${text}'`;
+};
+
 export function getByText<E extends Element>(
   text: string,
   options: string | { parent?: string; container?: Node; index?: number; timeout?: number; exact?: boolean } = {},
@@ -18,7 +25,8 @@ export function getByText<E extends Element>(
 
   return waitFor<E>(
     async () => {
-      const xpath = `//${parent}${ignoreTags}[${exact ? `normalize-space()='${text}' or normalize-space(text())='${text}'` : `contains(normalize-space(),'${text}') or contains(normalize-space(text()),'${text}')`}]`;
+      const sanitizedText = sanitizeText(text);
+      const xpath = `//${parent}${ignoreTags}[${exact ? `normalize-space()=${sanitizedText} or normalize-space(text())=${sanitizedText}` : `contains(normalize-space(),${sanitizedText}) or contains(normalize-space(text()),${sanitizedText})`}]`;
       const result = document.evaluate(xpath, container, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
 
       let element: Node | null;
