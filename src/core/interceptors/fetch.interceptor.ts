@@ -17,6 +17,7 @@ export async function fetchInterceptor(
     body,
     response,
     status: response.status,
+    json: response.json,
   });
 
   return response;

@@ -1,42 +1,45 @@
 {
   "backstage": {
     "membership-registration": {
-      "sanity": "tests/backstage/membership-registration/sanity.spec.js"
+      "sanity": "tests/dist/backstage/membership-registration/sanity.spec.js"
     }
   },
   "membership-registration": {
     "author-as-other": {
-      "happy-flow.prospective-member": "tests/membership-registration/author-as-other/happy-flow.prospective-member.spec.js",
-      "happy-flow": "tests/membership-registration/author-as-other/happy-flow.spec.js"
+      "happy-flow.prospective-member": "tests/dist/membership-registration/author-as-other/happy-flow.prospective-member.spec.js",
+      "happy-flow": "tests/dist/membership-registration/author-as-other/happy-flow.spec.js"
     },
     "author-as-owner": {
-      "green-suite": "tests/membership-registration/author-as-owner/green-suite.spec.js",
-      "happy-flow": "tests/membership-registration/author-as-owner/happy-flow.spec.js",
+      "green-suite": "tests/dist/membership-registration/author-as-owner/green-suite.spec.js",
+      "happy-flow": "tests/dist/membership-registration/author-as-owner/happy-flow.spec.js",
       "legal-guardian": {
-        "legal-guardian.sign": "tests/membership-registration/author-as-owner/legal-guardian/legal-guardian.sign.spec.js",
-        "minor.sign": "tests/membership-registration/author-as-owner/legal-guardian/minor.sign.spec.js",
-        "minor.start": "tests/membership-registration/author-as-owner/legal-guardian/minor.start.spec.js"
+        "legal-guardian.sign": "tests/dist/membership-registration/author-as-owner/legal-guardian/legal-guardian.sign.spec.js",
+        "minor.sign": "tests/dist/membership-registration/author-as-owner/legal-guardian/minor.sign.spec.js",
+        "minor.start": "tests/dist/membership-registration/author-as-owner/legal-guardian/minor.start.spec.js"
       }
     },
     "debug": {
-      "set-registration-details-validated": "tests/membership-registration/debug/set-registration-details-validated.spec.js",
-      "set-rightsholder-approved": "tests/membership-registration/debug/set-rightsholder-approved.spec.js"
+      "set-registration-details-validated": "tests/dist/membership-registration/debug/set-registration-details-validated.spec.js",
+      "set-rightsholder-approved": "tests/dist/membership-registration/debug/set-rightsholder-approved.spec.js"
     },
     "publisher": {
-      "happy-flow": "tests/membership-registration/publisher/happy-flow.spec.js"
+      "happy-flow": "tests/dist/membership-registration/publisher/happy-flow.spec.js",
+      "signer-one.sign": "tests/dist/membership-registration/publisher/signer-one.sign.spec.js"
     }
   },
   "residency-information": {
-    "happy-flow": "tests/residency-information/happy-flow.spec.js"
+    "happy-flow": "tests/dist/residency-information/happy-flow.spec.js"
   },
   "user": {
-    "email-code": "tests/user/email-code.spec.js",
-    "login-author": "tests/user/login-author.spec.js",
-    "login-backstage": "tests/user/login-backstage.spec.js",
-    "login-debug": "tests/user/login-debug.spec.js",
-    "login-legal-guardian": "tests/user/login-legal-guardian.spec.js",
-    "login-manager": "tests/user/login-manager.spec.js",
-    "login-new-member": "tests/user/login-new-member.spec.js",
-    "login-non-member": "tests/user/login-non-member.spec.js"
+    "email-code": "tests/dist/user/email-code.spec.js",
+    "login-author": "tests/dist/user/login-author.spec.js",
+    "login-backstage": "tests/dist/user/login-backstage.spec.js",
+    "login-debug": "tests/dist/user/login-debug.spec.js",
+    "login-legal-guardian": "tests/dist/user/login-legal-guardian.spec.js",
+    "login-manager": "tests/dist/user/login-manager.spec.js",
+    "login-new-member": "tests/dist/user/login-new-member.spec.js",
+    "login-non-member": "tests/dist/user/login-non-member.spec.js",
+    "login-signer-one": "tests/dist/user/login-signer-one.spec.js",
+    "login-signer-two": "tests/dist/user/login-signer-two.spec.js"
   }
 }

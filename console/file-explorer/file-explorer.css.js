@@ -38,6 +38,7 @@ export const css = /*css */ `
   min-width: 240px;
   max-width: fit-content;
   flex:1;
+  z-index: 9999;
 }
 
 :host([data-minimized="true"]) {
@@ -55,7 +56,9 @@ export const css = /*css */ `
   overflow: hidden;
   height: 100%;
   max-width: fit-content;
-  position: relative;
+  position: fixed;
+  display:flex;
+  flex-direction: column;
 }
 
 .ui-file-explorer__header {
@@ -83,9 +86,11 @@ export const css = /*css */ `
   padding-left: var(--ui-file-explorer-title-padding-left);
 }
 
-/* .ui-file-explorer__content {
-  padding: var(--ui-file-explorer-content-padding);
-} */
+.ui-file-explorer__content {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
 
 .ui-file-explorer__buttons {
   display: flex;

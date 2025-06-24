@@ -1,5 +1,41 @@
 import { ReporterInterface, Reporters } from '../reporters/types.js';
 
+export interface Faker {
+  person: {
+    firstName: () => string;
+    lastName: () => string;
+    sex: () => string;
+  };
+  internet: {
+    email: () => string;
+  };
+  date: {
+    past: (years: number) => Date;
+    birthdate: (options?: { min?: number; max?: number; mode?: 'age' | 'year' }) => Date;
+  };
+  location: {
+    street: () => string;
+    city: () => string;
+    secondaryAddress: () => string;
+    zipCode: () => string;
+    buildingNumber: () => string;
+  };
+  string: {
+    numeric: (length: number) => string;
+  };
+  company: {
+    name: () => string;
+  };
+}
+
+declare global {
+  var faker: Faker;
+  interface GlobalThis {
+    faker: Faker;
+    runner: Runner;
+  }
+}
+
 export type Intercept = {
   (...args: any[]): any;
   restore: () => void;
@@ -134,7 +170,7 @@ export type MatcherResultInterface = {
 
 export type Matchers = {
   readonly toEqual: (expected: any) => void;
-  readonly toBeDefined: (expected: any) => void;
+  readonly toBeDefined: () => void;
   readonly toBeVisible: () => void;
   readonly resolves: {
     readonly toEqual: (expected: any) => Promise<void>;
@@ -166,4 +202,10 @@ export type TestConfigReporter = ReporterInterface | Reporters | ReporterConfig;
 
 export type TestConfig = {
   reporters?: TestConfigReporter[];
+};
+
+export type TestFunction = {
+  (name: string, fn: TestCallback): void;
+  skip(name: string, fn: TestCallback): void;
+  only(name: string, fn: TestCallback): void;
 };

@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@e2e/*": ["../dist/*", "../../dist/*"]
+    }
+  },
+  "include": ["./**/*.ts", "./**/*.js"]
+}

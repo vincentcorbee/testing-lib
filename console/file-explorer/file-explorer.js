@@ -155,8 +155,6 @@ class FileExplorer extends HTMLElement {
           if (action === 'min') {
             this.dataset.minimized = this.dataset.minimized === 'true' ? 'false' : 'true';
           }
-
-          console.log(action);
         }
       };
 
@@ -204,6 +202,12 @@ class FileExplorer extends HTMLElement {
         style,
         append(container, append(header, append(buttons, minButton), headerTitle), content),
       );
+
+      const observer = new ResizeObserver(() => {
+        this.style.minWidth = container.clientWidth + 'px';
+      });
+
+      observer.observe(container);
     }
   }
 

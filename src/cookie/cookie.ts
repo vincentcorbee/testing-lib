@@ -2,7 +2,7 @@
 
 export type Cookie = {
   key: string;
-  value?: string;
+  value?: string | null;
   attributes?: Record<string, any>;
 };
 
@@ -70,7 +70,9 @@ function addCookieAttributes(cookie: string, attributes: Record<string, any>) {
   return result;
 }
 
-export function getCookie(...cookieNames: string[]) {
+export function getCookie<Cookies extends Record<string, string> = Record<string, string>>(
+  ...cookieNames: string[]
+): Cookies {
   const cookies = {};
 
   /*
@@ -85,13 +87,13 @@ export function getCookie(...cookieNames: string[]) {
     }
   });
 
-  if (cookieNames.length === 0) return cookies;
+  if (cookieNames.length === 0) return cookies as Cookies;
 
   const result = {};
 
   for (const name of cookieNames) result[name] = cookies[name];
 
-  return result;
+  return result as Cookies;
 }
 
 /* Note, to remove a cookie, the Path and the Domain attribute must match with the existing cookie. */

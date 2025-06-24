@@ -1,4 +1,4 @@
-export function waitForWithResolvers<V = undefined>(
+export function waitForWithResolvers<V = any>(
   action: (resolve: (value?: V | PromiseLike<V>) => void, reject: (reason?: any) => void) => void | Promise<void>,
   options: { timeout?: number } = {},
 ): Promise<V | undefined> {

@@ -15,6 +15,7 @@ import {
   Runner,
   TestCallback,
   TestConfig,
+  TestFunction,
 } from './types.js';
 import { env } from '../shared/env.js';
 import { getFaker } from '../shared/get-faker.js';
@@ -74,7 +75,7 @@ Object.defineProperties(describe, {
   },
 });
 
-export function test(name: string, fn: TestCallback) {
+function test(name: string, fn: TestCallback) {
   testRunner.test(name, fn);
 }
 
@@ -90,6 +91,10 @@ Object.defineProperties(test, {
     },
   },
 });
+
+const typedTest = test as TestFunction;
+
+export { typedTest as test };
 
 export const runner: Runner = {
   mockFunction(mockImplementation?: MockFunctionImplementation) {

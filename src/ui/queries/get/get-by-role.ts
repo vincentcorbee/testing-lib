@@ -111,7 +111,7 @@ function getHeading(level?: number) {
 }
 
 function createXpath(options: CreateXpathOptions) {
-  const { role, name, exact = true, label, disabled = false, level } = options;
+  const { role, name, exact = true, label, disabled, level } = options;
   let xpath = '';
 
   switch (role) {
@@ -136,23 +136,12 @@ function createXpath(options: CreateXpathOptions) {
   if (label) xpath += `[@aria-label='${label}']`;
 
   if (disabled) xpath += `[@disabled]`;
+  else if (disabled === false) xpath += `[not(@disabled)]`;
 
   return xpath;
 }
 
-export function getByRole<E extends Element>(
-  role: Role,
-  options: {
-    container?: Node;
-    index?: number;
-    timeout?: number;
-    name?: string;
-    exact?: boolean;
-    label?: string;
-    disabled?: boolean;
-    level?: number;
-  } = {},
-) {
+export function getByRole<E extends Element>(role: Role, options: GetByRoleOptions = {}) {
   const { index = 0, container = document, timeout = 1000, ...rest } = options || {};
 
   return waitFor<E>(

@@ -5,6 +5,7 @@ export type RequestEventBase = {
   method: string;
   url: URL;
   status: number;
+  json: () => Promise<any>;
 };
 
 export type FetchRequestEvent = {
@@ -20,7 +21,6 @@ export type XMLHttpRequestRequestEvent = {
   responseType: XMLHttpRequestResponseType;
   responseXML: XMLHttpRequest['responseXML'];
   responseText: XMLHttpRequest['responseText'];
-  json: () => Promise<any>;
 } & RequestEventBase;
 
 export type RequestEvent = FetchRequestEvent | XMLHttpRequestRequestEvent;
