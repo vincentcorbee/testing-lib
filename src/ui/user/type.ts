@@ -1,4 +1,5 @@
 import { waitForWithResolvers } from '../../shared/wait-for-with-resolvers.js';
+import { wait } from '../../shared/wait.js';
 import { fireEvent } from '../event/fire-event.js';
 import { getCode } from '../get-code.js';
 import { getBySelector } from '../queries/get/get-by-selector.js';
@@ -22,37 +23,30 @@ export function type(
 
       element.focus();
 
-      const interval = setInterval(
-        async () => {
-          try {
-            const codePoint = value.codePointAt(index)!;
-            const key = String.fromCodePoint(codePoint);
-            const code = getCode(key);
+      while (index < value.length) {
+        try {
+          await wait(Math.max(Math.random() * max, min));
 
-            await fireEvent(element, 'keydown', { key, code });
+          const codePoint = value.codePointAt(index)!;
+          const key = String.fromCodePoint(codePoint);
+          const code = getCode(key);
 
-            typed += key;
+          await fireEvent(element, 'keydown', { key, code });
 
-            await fireEvent(element, 'input', { target: { value: typed } });
-            await fireEvent(element, 'keyup', { key, code });
+          typed += key;
 
-            index += key.length;
+          await fireEvent(element, 'input', { target: { value: typed } });
+          await fireEvent(element, 'keyup', { key, code });
 
-            if (index >= value.length) {
-              clearInterval(interval);
+          index += key.length;
+        } catch (error) {
+          reject(error);
+        }
+      }
 
-              await fireEvent(element, 'change', { target: { value } });
+      await fireEvent(element, 'change', { target: { value } });
 
-              resolve();
-            }
-          } catch (error) {
-            clearInterval(interval);
-
-            reject(error);
-          }
-        },
-        Math.max(Math.random() * max, min),
-      );
+      resolve();
     } else {
       resolve();
     }

@@ -279,11 +279,15 @@ describe('Membership registration publisher', () => {
       await user.click(await screen.getByRole('heading', { name: 'Bedrijfsgegevens', level: 2 }));
 
       for (const [key, value] of Object.entries(companyDetails)) {
+        if (key === 'signers') continue;
+
         let v = value;
 
         if (key === 'dateOfIncorporation') v = value.split('-').map(padNumber).join('/');
 
         if (key === 'zipcode') v = value.replace(/(\d{4})(\w{2})/, '$1 $2');
+
+        if (key === 'legalForm') v = 'Besloten Vennootschap met gewone structuur';
 
         if (v) await screen.getByText(v);
       }
@@ -296,6 +300,18 @@ describe('Membership registration publisher', () => {
 
     test('should see Contactgegevens', async () => {
       await user.click(await screen.getByRole('heading', { name: 'Contactgegevens', level: 2 }));
+    });
+
+    test('should approve registration details backstage', async () => {
+      const registrationId = getRegistrationIdFromPath(location.pathname);
+
+      await graphQL.approveCompanyDetails(registrationId);
+
+      navigation.reload(`/membership-registration`);
+    });
+
+    test('should see next button enabled', async () => {
+      await screen.getByRole('button', { name: 'Volgende', disabled: false });
     });
 
     test('should go to Start je registratie page', async () => {

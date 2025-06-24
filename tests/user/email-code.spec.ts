@@ -2,7 +2,7 @@ import { describe, test, beforeAll } from '@e2e/index.js';
 import { env } from '../env.js';
 import { Postmark } from '../api/postmark.js';
 describe('Email code', () => {
-  let postmark;
+  let postmark: Postmark;
 
   beforeAll(() => {
     postmark = new Postmark({

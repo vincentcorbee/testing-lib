@@ -1,7 +1,7 @@
 {
   "name": "@digitalbranch/e2e",
   "version": "1.0.12",
-  "description": "",
+  "description": "End-to-end testing library",
   "main": "./dist/index.js",
   "type": "module",
   "scripts": {

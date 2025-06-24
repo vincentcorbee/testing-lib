@@ -11,19 +11,19 @@ export class GraphQL {
     this.#graphqlEndpoint = graphqlEndpoint;
   }
 
-  set ssoAccessToken(token) {
+  set ssoAccessToken(token: string) {
     this.#ssoAccessToken = token;
   }
 
-  set ssoAccessTokenBackstage(token) {
+  set ssoAccessTokenBackstage(token: string) {
     this.#ssoAccessTokenBackstage = token;
   }
 
-  set ssoAccessTokenDebug(token) {
+  set ssoAccessTokenDebug(token: string) {
     this.#ssoAccessTokenDebug = token;
   }
 
-  async #performGraphQLQuery(query, variables = {}, ssoAccessToken) {
+  async #performGraphQLQuery(query: any, variables = {}, ssoAccessToken: string) {
     const response = await fetch(this.#graphqlEndpoint, {
       method: 'POST',
       headers: {
@@ -38,7 +38,7 @@ export class GraphQL {
     return result;
   }
 
-  blockIdentificationByIdentificationDocument(registrationId) {
+  blockIdentificationByIdentificationDocument(registrationId: string) {
     const query = `mutation($input: BlockIdentificationByIdentificationDocumentInputType!) {
       blockIdentificationByIdentificationDocument(input: $input) {
         id
@@ -58,7 +58,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { id: registrationId } }, this.#ssoAccessTokenBackstage);
   }
 
-  approveIdentificationByIdentificationDocument(registrationId) {
+  approveIdentificationByIdentificationDocument(registrationId: string) {
     const query = `mutation($input: ValidateIdentificationByIdentificationDocumentInputType!) {
       approveIdentificationByIdentificationDocument(input: $input) {
         id
@@ -97,7 +97,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, {}, this.#ssoAccessToken);
   }
 
-  approvePersonalPaymentDetails(registrationId) {
+  approvePersonalPaymentDetails(registrationId: string) {
     const query = `mutation($input: ApprovePersonalPaymentDetailsInputType!) {
       approvePersonalPaymentDetails(input: $input) {
         id
@@ -107,7 +107,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
   }
 
-  blockPersonalPaymentDetails(registrationId) {
+  blockPersonalPaymentDetails(registrationId: string) {
     const query = `mutation($input: BlockPersonalPaymentDetailsInputType!) {
       blockPersonalPaymentDetails(input: $input) {
         id
@@ -117,7 +117,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
   }
 
-  setRegistrationDetailsValidated(registrationId) {
+  setRegistrationDetailsValidated(registrationId: string) {
     const query = `mutation($input: RegistrationStateInputType!) {
       setRegistrationDetailsValidated(input: $input)
     }`;
@@ -125,7 +125,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
   }
 
-  etRightsholderApproved(registrationId) {
+  etRightsholderApproved(registrationId: string) {
     const query = `mutation($input: RegistrationStateInputType!) {
       setRightsholderApproved(input: $input)
     }`;
@@ -133,7 +133,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
   }
 
-  setRightsholderAsNew(registrationId) {
+  setRightsholderAsNew(registrationId: string) {
     const query = `mutation($input: RightsholderDetailsInputType!) {
       setRightsholderAsNew(input: $input) {
         state
@@ -143,7 +143,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenBackstage);
   }
 
-  getRegistrationAuthor(registrationId) {
+  getRegistrationAuthor(registrationId: string) {
     const query = `query($input: GetRegistrationInputType!) {
       getRegistrationAuthor(input: $input) {
         shareholder {
@@ -159,7 +159,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { registrationId } }, this.#ssoAccessTokenDebug);
   }
 
-  getRegistration(registrationId) {
+  getRegistration(registrationId: string) {
     const query = `query getRegistration($input: RegistrationGetInputType!) {
       membershipRegistrationById(input: $input) {
         identification {
@@ -171,7 +171,7 @@ export class GraphQL {
     return this.#performGraphQLQuery(query, { input: { id: registrationId } }, this.#ssoAccessToken);
   }
 
-  approveCompanyDetails(registrationId) {
+  approveCompanyDetails(registrationId: string) {
     const query = `mutation($input: ApproveCompanyDetailsInputType!) {
       approveCompanyDetails(input: $input) {
         id
