@@ -1,12 +1,12 @@
 import { beforeAll, describe, test, expect, screen, user, page, wait } from '@e2e/index.js';
 import { GraphQL } from '../../api/graphql.js';
 import { env } from '../../env.js';
-import { padNumber, loginUser } from '../../utils/index.js';
+import { padNumber, loginUser, waitForPageload } from '../../utils/index.js';
 import { clickIdentificationSection, clickOtherIdentificationCard } from './helpers.js';
 import { getRegistrationIdFromPath } from '../helpers.js';
 
 describe('Membership registration', () => {
-  let graphQL;
+  let graphQL: GraphQL;
 
   beforeAll(async () => {
     console.clear();
@@ -30,7 +30,8 @@ describe('Membership registration', () => {
     });
 
     test('should go to identification form page', async () => {
-      await user.click(await screen.getByText('Invullen', 'button'));
+      await waitForPageload();
+      await user.click(await screen.getByRole('button', { name: 'Invullen' }));
       await page.location(/\/identification\/form$/);
     });
 
@@ -49,7 +50,7 @@ describe('Membership registration', () => {
         await screen.getByRole('button', { name: 'In behandeling', disabled: true });
       });
 
-      test('should approve identification by backstage', async () => {
+      test.only('should approve identification by backstage', async () => {
         const registrationId = getRegistrationIdFromPath(location.pathname);
         const {
           data: {
@@ -69,7 +70,7 @@ describe('Membership registration', () => {
       await page.location(/\/overview$/);
     });
 
-    test.only('should see Identificeren details', async () => {
+    test('should see Identificeren details', async () => {
       await screen.getByRole('button', { name: 'Afgerond', disabled: true });
       await user.click(await screen.getByText('Identificeren'));
       await screen.getByText('ID document');

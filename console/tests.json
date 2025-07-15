@@ -39,7 +39,9 @@
     "login-manager": "tests/dist/user/login-manager.spec.js",
     "login-new-member": "tests/dist/user/login-new-member.spec.js",
     "login-non-member": "tests/dist/user/login-non-member.spec.js",
+    "login-publisher-one": "tests/dist/user/login-publisher-one.spec.js",
     "login-signer-one": "tests/dist/user/login-signer-one.spec.js",
-    "login-signer-two": "tests/dist/user/login-signer-two.spec.js"
+    "login-signer-two": "tests/dist/user/login-signer-two.spec.js",
+    "login": "tests/dist/user/login.spec.js"
   }
 }

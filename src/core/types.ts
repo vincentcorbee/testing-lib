@@ -209,3 +209,9 @@ export type TestFunction = {
   skip(name: string, fn: TestCallback): void;
   only(name: string, fn: TestCallback): void;
 };
+
+export type DescribeFunction = {
+  (name: string, fn: DescribeCallback): Promise<void>;
+  skip(name: string, fn: DescribeCallback): void;
+  only(name: string, fn: DescribeCallback): void;
+};

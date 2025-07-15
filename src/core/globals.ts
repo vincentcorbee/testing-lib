@@ -11,6 +11,7 @@ import {
   BeforeAllCallback,
   BeforeEachCallback,
   DescribeCallback,
+  DescribeFunction,
   MockFunctionImplementation,
   Runner,
   TestCallback,
@@ -52,7 +53,7 @@ export function afterEach(fn: AfterEachCallback) {
   testRunner.afterEach(fn);
 }
 
-export async function describe(name: string, fn: DescribeCallback) {
+async function describe(name: string, fn: DescribeCallback) {
   testRunner.describe(name, fn);
 
   testRunner.currentDescribeBlock = testRunner.currentDescribeBlock.parent ?? testRunner.root;
@@ -94,7 +95,9 @@ Object.defineProperties(test, {
 
 const typedTest = test as TestFunction;
 
-export { typedTest as test };
+const typedDescribe = describe as DescribeFunction;
+
+export { typedTest as test, typedDescribe as describe };
 
 export const runner: Runner = {
   mockFunction(mockImplementation?: MockFunctionImplementation) {

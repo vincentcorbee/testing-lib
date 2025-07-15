@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, event, test, screen, user, page, navigatio
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
-import { loginUser, padNumber, pickDate } from '../../utils/index.js';
+import { loginUser, padNumber, pickDate, waitForPageload } from '../../utils/index.js';
 import {
   clickButton,
   createCompanyDetails,
@@ -23,8 +23,6 @@ describe('Membership registration publisher', () => {
   let bankAccountNumber: string;
   let bankName: string;
   let bic: string;
-  let signerOneEmail: string;
-  let signerTwoEmail: string;
 
   beforeAll(async () => {
     console.clear();
@@ -62,8 +60,6 @@ describe('Membership registration publisher', () => {
     bankAccountNumber = '12234';
     bankName = 'ing';
     bic = 'INGBNL2A';
-    signerOneEmail = env.users.signer_one.login_id;
-    signerTwoEmail = env.users.signer_two.login_id;
 
     await loginUser('backstage');
     await loginUser('non_member');
@@ -107,7 +103,6 @@ describe('Membership registration publisher', () => {
 
     test('should open Bedrijfsgegevens card', async () => {
       await user.click(await screen.getByRole('heading', { name: 'Bedrijfsgegevens', level: 2 }));
-
       await screen.isVisible(await screen.getByText<HTMLElement>('Bedrijfsnaam'));
     });
 
@@ -121,6 +116,13 @@ describe('Membership registration publisher', () => {
           await user.upload(
             '#proofOfRegistration-input',
             new File(['Hello'], 'my-file.pdf', { type: 'application/pdf' }),
+          );
+        });
+
+        test('should see signers message for VOF', async () => {
+          await user.selectOptions('#legalForm', 11);
+          await screen.getByText(
+            'Het is verplicht om alle rechtsbevoegden van de VOF toe te voegen als ondertekenaar.',
           );
         });
 
@@ -146,7 +148,9 @@ describe('Membership registration publisher', () => {
           await user.type('#infix', signer.infix);
           await user.type('#lastName', signer.lastName);
           await pickDate(await screen.getBySelector('#dateOfBirth'), signer.dateOfBirth);
+
           const emailInput = await screen.getBySelector<HTMLInputElement>('#email');
+
           await user.type(emailInput, signer.email);
           await user.click(await screen.getByRole('button', { name: 'Toevoegen' }));
         });
@@ -187,9 +191,15 @@ describe('Membership registration publisher', () => {
           await user.type('#infix', signer.infix);
           await user.type('#lastName', signer.lastName);
           await pickDate(await screen.getBySelector('#dateOfBirth'), signer.dateOfBirth);
+
           const emailInput = await screen.getBySelector<HTMLInputElement>('#email');
+
           await user.type(emailInput, signer.email);
           await user.click(await screen.getByRole('button', { name: 'Toevoegen' }));
+        });
+
+        test('should not be able to add another signer', async () => {
+          await screen.getByRole('button', { name: 'Toevoegen', disabled: true });
         });
 
         test('should set signer as owner', async () => {
@@ -329,7 +339,7 @@ describe('Membership registration publisher', () => {
 
   describe('Rechten beheren', () => {
     test('should go to Rechten beheren', async () => {
-      if (await screen.findByRole('button', { name: 'Invullen', disabled: true, index: 1 })) {
+      if (await screen.findByRole('button', { name: 'Geblokkeerd' })) {
         const registrationId = getRegistrationIdFromPath(location.pathname);
 
         await graphQL.setRightsholderAsNew(registrationId);
@@ -339,6 +349,7 @@ describe('Membership registration publisher', () => {
 
       await user.click(await screen.getByRole<HTMLButtonElement>('button', { name: 'Invullen', disabled: false }));
       await page.location(/\/manage-rights$/);
+      await waitForPageload();
     });
 
     test('should open Rechten beheren card', async () => {

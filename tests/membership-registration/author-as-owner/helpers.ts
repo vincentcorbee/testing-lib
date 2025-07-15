@@ -1,6 +1,5 @@
 import { event, user, page, screen } from '@e2e/index.js';
-import { padNumber, pickDate } from '../../utils/index.js';
-import { waitForPageload } from '../helpers.js';
+import { padNumber, pickDate, waitForPageload } from '../../utils/index.js';
 
 export async function clickStartRegistrationAsAuthorCard() {
   await user.click('#author');

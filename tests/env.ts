@@ -86,5 +86,13 @@ export const env = {
       sso_access_token: '',
       refresh_token: '',
     },
+    publisher_one: {
+      user_id: '7b90795b-6f91-4903-8d4b-47fb49ae487c',
+      login_id: 'vincentcorbee@gmail.com',
+      password: 'ybJ72xrQoGQoXyZJ_',
+      application: 'mijn_buma_stemra',
+      sso_access_token: '',
+      refresh_token: '',
+    },
   },
 } as const;

@@ -13,23 +13,25 @@ export type Location = {
   search: string;
 };
 
-export function location(predicate: string, options?: { timeout?: number }): Promise<void>;
-export function location(predicate: RegExp, options?: { timeout?: number }): Promise<void>;
+export type LocationOptions = { timeout?: number };
+
+export function location(predicate: string, options?: LocationOptions): Promise<void>;
+export function location(predicate: RegExp, options?: LocationOptions): Promise<void>;
 export function location(
   property: keyof Location,
   predicate: string | RegExp,
-  options?: { timeout?: number },
+  options?: LocationOptions,
 ): Promise<void>;
 export function location(
   predicate: (location: Location) => void | Promise<void>,
-  options?: { timeout?: number },
+  options?: LocationOptions,
 ): Promise<void>;
 export function location(
   predicateOrProperty: keyof Location | string | RegExp | ((location: Location) => void | Promise<void>),
-  predicate?: string | RegExp | { timeout?: number },
-  options?: { timeout?: number },
+  predicate?: string | RegExp | LocationOptions,
+  options?: LocationOptions,
 ): Promise<void> {
-  options = arguments[arguments.length - 1] as { timeout?: number };
+  options = arguments[arguments.length - 1] as LocationOptions;
 
   return waitForWithResolvers<void>(async (resolve) => {
     const { hash, host, hostname, href, origin, pathname, port, protocol, search } = window.location;

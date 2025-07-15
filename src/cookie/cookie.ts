@@ -1,5 +1,7 @@
 /* Set Cookie: https://datatracker.ietf.org/doc/html/rfc6265 */
 
+export type CookieAttributes = Record<string, any>;
+
 export type Cookie = {
   key: string;
   value?: string | null;
@@ -58,7 +60,7 @@ function createCookieAttribute(name: string, value: any) {
 }
 
 /* Note that the expires attribute value needs to be a UTCString see: https://datatracker.ietf.org/doc/html/rfc2616#section-3.3 */
-function addCookieAttributes(cookie: string, attributes: Record<string, any>) {
+function addCookieAttributes(cookie: string, attributes: CookieAttributes) {
   let result = cookie;
 
   for (const [name, value] of Object.entries(attributes)) {

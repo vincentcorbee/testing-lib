@@ -2,7 +2,7 @@ import { beforeAll, describe, test, expect, screen, user, event, page, wait, nav
 import { GraphQL } from '../../api/graphql.js';
 import { RestApi } from '../../api/rest.js';
 import { env } from '../../env.js';
-import { padNumber, loginUser } from '../../utils/index.js';
+import { padNumber, loginUser, waitForPageload } from '../../utils/index.js';
 import {
   clickButton,
   createPersonalDetails,
@@ -275,6 +275,7 @@ describe('Membership registration', () => {
 
       await user.click(await screen.getByText('Invullen', 'button'));
       await page.location(/\/manage-rights$/);
+      await waitForPageload();
     });
 
     test('should open Rechten beheren card', async () => {

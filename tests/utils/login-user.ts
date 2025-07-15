@@ -1,6 +1,6 @@
 import { env } from '../env.js';
 
-export async function loginUser(username) {
+export async function loginUser(username: string) {
   const user = env.users[username];
 
   if (!user) throw Error(`User ${username} not found`);
