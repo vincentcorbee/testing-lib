@@ -337,8 +337,8 @@ describe('Membership registration publisher', () => {
     });
   });
 
-  describe('Rechten beheren', () => {
-    test('should go to Rechten beheren', async () => {
+  describe('Manage rights', () => {
+    test('should go to manage rights', async () => {
       if (await screen.findByRole('button', { name: 'Geblokkeerd' })) {
         const registrationId = getRegistrationIdFromPath(location.pathname);
 
@@ -347,27 +347,66 @@ describe('Membership registration publisher', () => {
         navigation.reload(`/membership-registration`);
       }
 
-      await user.click(await screen.getByRole<HTMLButtonElement>('button', { name: 'Invullen', disabled: false }));
+      await user.click(await screen.getByText('Invullen', 'button'));
       await page.location(/\/manage-rights$/);
       await waitForPageload();
     });
 
-    test('should open Rechten beheren card', async () => {
+    test('should open manage rights card', async () => {
       await user.click(await screen.getByRole('heading', { name: 'Rechten beheren', level: 2 }));
       await screen.isVisible(await screen.getByText<HTMLElement>('Geselecteerde rechten'));
       await screen.isVisible(await screen.getByText<HTMLElement>('Dekkingsgebied'));
       await screen.isVisible(await screen.getByText<HTMLElement>('Startdatum'));
     });
 
-    test('should go to Rechten beheren form', async () => {
+    test('should go to manage rights choice page', async () => {
       await user.click(await screen.getByText('Invullen', 'button'));
 
-      await page.location(/\/manage-rights\/form$/);
+      await page.location(/\/manage-rights\/new$/);
     });
 
-    test('should save selected rights', async () => {
-      await clickButton('Opslaan');
-      await page.location(/\/manage-rights$/);
+    describe('World selection', () => {
+      test('should go to world selction page', async () => {
+        await user.click(await screen.getByText('Selecteren', { index: 0 }));
+        await page.location(/\/world$/);
+      });
+
+      test('should save selected rights', async () => {
+        await clickButton('Opslaan');
+        await page.location(/\/manage-rights$/);
+      });
+    });
+
+    test('should go to manage rights choice page', async () => {
+      await user.click(await screen.getByText('Wijzigen', 'button'));
+
+      await page.location(/\/manage-rights\/new$/);
+    });
+
+    describe('Custom selection', () => {
+      test('should go to custom selction page', async () => {
+        await user.click(await screen.getByText('Selecteren', { index: 1 }));
+        await page.location(/\/custom$/);
+      });
+
+      test('should select region', async () => {
+        await user.type('#region', 'Europe');
+        await user.click(await screen.getByRole('button', { name: 'Europe' }));
+      });
+
+      test('should go to rights selection', async () => {
+        await user.click(await screen.getByRole('button', { name: 'Ga verder' }));
+        await page.location(/\/select-rights$/);
+      });
+
+      test('select territory', async () => {
+        await user.click(await screen.getByText('Algarije'));
+      });
+
+      test('should save selected rights', async () => {
+        await clickButton('Opslaan');
+        await page.location(/\/manage-rights$/);
+      });
     });
 
     test('should confirm details', async () => {
@@ -388,9 +427,9 @@ describe('Membership registration publisher', () => {
       await screen.getByText('Online uitvoerend');
       await screen.getByText('Radio, Televisie en Simulcasting');
 
-      const world = await screen.getAllByText('Wereld');
+      const coverage = await screen.getAllByText('Wereld -(Europe)');
 
-      expect(world.length).toEqual(6);
+      expect(coverage.length).toEqual(6);
     });
   });
 });

@@ -22,7 +22,7 @@ export async function clickOtherIdentificationCard(index = 1) {
   await user.click(await screen.getByText('Selecteren', { index }));
 }
 
-export async function fillInPersonalDetails(personalDetails) {
+export async function fillInPersonalDetails(personalDetails: Record<string, any>) {
   await user.type('#firstName', personalDetails.firstName);
   await user.type('#firstNames', personalDetails.firstNames);
   await user.type('#lastName', personalDetails.lastName);
@@ -34,7 +34,7 @@ export async function fillInPersonalDetails(personalDetails) {
   await user.selectOptions('#nationality', personalDetails.nationality);
 }
 
-export async function fillInPersonalContactDetails(contactDetails) {
+export async function fillInPersonalContactDetails(contactDetails: Record<string, any>) {
   await user.type('#zipCode', contactDetails.zipCode);
   await user.type('#houseNumber', contactDetails.houseNumber);
   await user.type('input[name=street]', contactDetails.street);
@@ -44,7 +44,7 @@ export async function fillInPersonalContactDetails(contactDetails) {
   await user.type('#email', contactDetails.email);
 }
 
-export async function clickButton(name) {
+export async function clickButton(name: string) {
   await user.click(await screen.getByRole('button', { name }));
 }
 

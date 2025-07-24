@@ -32,30 +32,30 @@ describe('Membership registration author as other', () => {
   });
 
   describe('Contract ondertekenen', () => {
-    test.skip('should not be started', async () => {
+    test('should not be started', async () => {
       await user.click(await screen.getByText('Contract ondertekenen'));
       await screen.getByText('Nog niet gestart');
     });
 
-    test.skip('should go to Contract tekenen', async () => {
+    test('should go to Contract tekenen', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/\/sign-contract/);
     });
 
-    test.skip('should sign contract Buma', async () => {
+    test('should sign contract Buma', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await user.click(await screen.getByRole('button', { name: 'Terug' }));
       await page.location(/overview$/);
     });
 
-    test.skip('should see Contract tekenen details', async () => {
+    test('should see Contract tekenen details', async () => {
       await screen.getByRole('button', { name: 'Ondertekenen' });
       await user.click(await screen.getByText('Contract ondertekenen'));
       await screen.getByText('Buma');
       await screen.getByText('Ondertekend');
     });
 
-    test.skip('should see that the Buma contract is signed', async () => {
+    test('should see that the Buma contract is signed', async () => {
       await user.click(await screen.getByRole('button', { name: 'Ondertekenen' }));
       await page.location(/sign-contract$/);
       await screen.getByRole('button', { name: 'Ondertekenen', disabled: true });
